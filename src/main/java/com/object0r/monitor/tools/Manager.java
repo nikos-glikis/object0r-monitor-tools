@@ -15,7 +15,7 @@ public class Manager
         return prop.getProperty(key);
     }
 
-    static void loadProperties()
+    public static void loadProperties()
     {
         FileInputStream input;
         try
@@ -29,7 +29,7 @@ public class Manager
         }
     }
 
-    static void updateProperties(String[] args)
+    public static void updateProperties(String[] args)
     {
         for (String arg : args)
         {
