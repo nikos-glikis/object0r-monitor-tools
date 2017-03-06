@@ -1,8 +1,11 @@
 package com.object0r.monitor.tools.helpers;
 
+import com.google.gson.Gson;
 import com.object0r.toortools.http.HttpHelper;
 import com.object0r.toortools.http.HttpRequestInformation;
 import com.object0r.toortools.http.HttpResult;
+
+import java.util.HashMap;
 
 
 public class DropboxHelper
@@ -38,6 +41,35 @@ public class DropboxHelper
     public static String downloadFileAsBase64String(String token, String file) throws Exception
     {
         return org.apache.commons.codec.binary.Base64.encodeBase64URLSafeString(downloadFile(token, file));
+    }
+
+    public static String getDirContentsJson(String token, String dir) throws Exception
+    {
+
+        HttpRequestInformation httpRequestInformation = new HttpRequestInformation();
+        httpRequestInformation.setMethodPost();
+        httpRequestInformation.setUrl("https://api.dropboxapi.com/2/files/list_folder");
+        httpRequestInformation.setHeader("Authorization", "Bearer " + token);
+        httpRequestInformation.setHeader("Content-Type", "application/json");
+        httpRequestInformation.setBody("{\n" +
+                "    \"path\": \"" + dir + "\",\n" +
+                "    \"recursive\": true,\n" +
+                "    \"include_media_info\": false,\n" +
+                "    \"include_deleted\": false,\n" +
+                "    \"include_has_explicit_shared_members\": false\n" +
+                "}");
+        HttpResult httpResult = HttpHelper.request(httpRequestInformation);
+        if (httpResult.isSuccessfull())
+        {
+            Gson gson = new Gson();
+            HashMap values = gson.fromJson(httpResult.getContentAsString(), HashMap.class);
+            return values.get("entries").toString();
+        }
+        else
+        {
+            System.out.println(httpResult.getContentAsString() + dir);
+            throw new Exception(httpResult.getThrownException());
+        }
     }
 
     public static String getFileMetadata(String token, String file) throws Exception

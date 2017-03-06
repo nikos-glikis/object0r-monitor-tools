@@ -82,7 +82,7 @@ abstract public class BaseEmailTest extends BaseTest
                     {
                         if (!message.getContent().toString().contains(stringToFind))
                         {
-                            errors.add(subject + " - I didn't find: " + stringToFind);
+                            errors.add(subject + " - I didn't find: " + stringToFind + " on email with subject " + subject);
                         }
                     }
                 }
