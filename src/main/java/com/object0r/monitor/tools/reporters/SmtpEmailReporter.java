@@ -1,5 +1,6 @@
 package com.object0r.monitor.tools.reporters;
 
+
 import javax.mail.*;
 import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
@@ -10,32 +11,48 @@ public class SmtpEmailReporter extends EmailReporter
 {
     private String fromName;
     private String fromEmail;
-    private String fromPassword;
+    private String username = null;
+    private String password = null;
     private String smtpHost;
     private String smtpPort;
 
     Session session = null;
 
-    public SmtpEmailReporter(String fromEmail, String fromName, String fromPassword, String smtpHost, String smtpPort)
+    //Constructor for SMTP with TLS Authentication
+
+    public SmtpEmailReporter(String fromEmail, String fromName, String username, String password, String smtpHost, String smtpPort)
     {
         this.fromEmail = fromEmail;
-        this.fromPassword = fromPassword;
+        this.fromName = fromName;
+        this.username = username;
+        this.password = password;
         this.smtpHost = smtpHost;
         this.smtpPort = smtpPort;
+
+    }
+
+    //Constructor for SMTP without authentication
+
+    public SmtpEmailReporter(String fromEmail, String fromName, String smtpHost, String smtpPort)
+    {
+        this.fromEmail = fromEmail;
         this.fromName = fromName;
+        this.smtpHost = smtpHost;
+        this.smtpPort = smtpPort;
+
     }
 
     private Session authenticate()
     {
-        final String fromEmail = this.fromEmail;
-        final String password = this.fromPassword;
+        final String username = this.username;
+        final String password = this.password;
         final String smtpHost = this.smtpHost;
         final String smtpPort = this.smtpPort;
 
         Session session;
         Authenticator auth = null;
         Properties props = new Properties();
-        if (password.equals("")) {
+        if (username == null || password == null) {
 
             props.put("mail.smtp.host", smtpHost);
             props.put("mail.smtp.port", smtpPort); //TLS Port
@@ -51,7 +68,7 @@ public class SmtpEmailReporter extends EmailReporter
                 //override the getPasswordAuthentication method
                 protected PasswordAuthentication getPasswordAuthentication()
                 {
-                    return new PasswordAuthentication(fromEmail, password);
+                    return new PasswordAuthentication(username, password);
                 }
             };
         }
