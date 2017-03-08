@@ -6,7 +6,7 @@
 
     <groupId>com.object0r.monitor.tools</groupId>
     <artifactId>object0r-monitor-tools</artifactId>
-    <version>1.0.2</version>
+    <version>1.0.3-SNAPSHOT</version>
 
     <name>object0r-monitor-tools</name>
     <description>TBA</description>
