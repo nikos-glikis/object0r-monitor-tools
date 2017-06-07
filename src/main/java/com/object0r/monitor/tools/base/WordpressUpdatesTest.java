@@ -34,6 +34,8 @@ abstract public class WordpressUpdatesTest extends BaseTest
 
     public abstract String getUsername();
 
+
+
     public abstract String getPassword();
 
     public abstract String getUrl();

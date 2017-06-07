@@ -17,7 +17,7 @@ abstract public class WordpressWpCliTest extends BaseTest
     {
         try
         {
-            OsCommandOutput osCommandOutput = OsHelper.runRemoteCommand(getHost(), getPort(), "wp core check-update --allow-root", getUser(), getPath(), getPrivateKeyPath());
+            OsCommandOutput osCommandOutput = OsHelper.runRemoteCommand(getHost(), getPort(), "wp core check-update --allow-root", getSshUser(), getPath(), getPrivateKeyPath());
             if (osCommandOutput.getExitCode() != 0)
             {
                 throw new Exception("Some error happened while runni WpCli tests (update core), error code is not zero, error output is:" + osCommandOutput.getErrorOutput());
@@ -27,7 +27,7 @@ abstract public class WordpressWpCliTest extends BaseTest
                 throw new Exception("Some error happened while runni WpCli tests (update core), error code is not zero, standard output is:" + osCommandOutput.getStandardOutput());
             }
 
-            osCommandOutput = OsHelper.runRemoteCommand(getHost(), getPort(), "wp plugin update --allow-root --all", getUser(), getPath(), getPrivateKeyPath());
+            osCommandOutput = OsHelper.runRemoteCommand(getHost(), getPort(), "wp plugin update --allow-root --all", getSshUser(), getPath(), getPrivateKeyPath());
             if (osCommandOutput.getExitCode() != 0)
             {
                 throw new Exception("Some error happened while runni WpCli tests (update plugin), error code is not zero, error output is:" + osCommandOutput.getErrorOutput());
@@ -37,7 +37,7 @@ abstract public class WordpressWpCliTest extends BaseTest
                 throw new Exception("Some error happened while runni WpCli tests (update plugin), error code is not zero, standard output is:" + osCommandOutput.getStandardOutput());
             }
 
-            osCommandOutput = OsHelper.runRemoteCommand(getHost(), getPort(), "chown -R " + getUser() + ":" + getUser() + " " + getPath(), getUser(), getPath(), getPrivateKeyPath());
+            osCommandOutput = OsHelper.runRemoteCommand(getHost(), getPort(), "chown -R " + getUser() + ":" + getUser() + " " + getPath(), getSshUser(), getPath(), getPrivateKeyPath());
             if (osCommandOutput.getExitCode() != 0)
             {
                 throw new Exception("Some error happened while runni WpCli tests (chown stuff), error code is not zero, error output is:" + osCommandOutput.getErrorOutput());
