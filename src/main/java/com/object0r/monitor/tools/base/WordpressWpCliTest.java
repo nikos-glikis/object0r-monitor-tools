@@ -37,6 +37,17 @@ abstract public class WordpressWpCliTest extends BaseTest
                 throw new Exception("Some error happened while runni WpCli tests (update plugin), error code is not zero, standard output is:" + osCommandOutput.getStandardOutput());
             }
 
+            osCommandOutput = OsHelper.runRemoteCommand(getHost(), getPort(), "wp theme update --all --allow-root", getSshUser(), getPath(), getPrivateKeyPath());
+            if (osCommandOutput.getExitCode() != 0)
+            {
+                throw new Exception("Some error happened while runni WpCli tests (update theme), error code is not zero, error output is:" + osCommandOutput.getErrorOutput());
+            }
+            if (!osCommandOutput.getStandardOutput().contains("Success: Theme already updated."))
+            {
+                throw new Exception("Some error happened while runni WpCli tests (update themes), error code is not zero, standard output is:" + osCommandOutput.getStandardOutput());
+            }
+
+
             osCommandOutput = OsHelper.runRemoteCommand(getHost(), getPort(), "chown -R " + getUser() + ":" + getUser() + " " + getPath(), getSshUser(), getPath(), getPrivateKeyPath());
             if (osCommandOutput.getExitCode() != 0)
             {
