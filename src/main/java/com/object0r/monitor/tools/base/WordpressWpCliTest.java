@@ -17,7 +17,7 @@ abstract public class WordpressWpCliTest extends BaseTest
     {
         try
         {
-            OsCommandOutput osCommandOutput = OsHelper.runRemoteCommand(getHost(), getPort(), "wp core check-update --allow-root", getSshUser(), getPath(), getPrivateKeyPath());
+            OsCommandOutput osCommandOutput = OsHelper.runRemoteCommand(getHost(), getPort(), "wp core update --allow-root", getSshUser(), getPath(), getPrivateKeyPath());
             if (osCommandOutput.getExitCode() != 0)
             {
                 throw new Exception("Some error happened while runni WpCli tests (update core), error code is not zero, error output is:" + osCommandOutput.getErrorOutput());
