@@ -22,7 +22,7 @@ abstract public class WordpressWpCliTest extends BaseTest
             {
                 throw new Exception("Some error happened while runni WpCli tests (update core), error code is not zero, error output is:" + osCommandOutput.getErrorOutput());
             }
-            if (!osCommandOutput.getStandardOutput().contains("Success: WordPress is at the latest version."))
+            if (!osCommandOutput.getStandardOutput().contains("Success: WordPress is up to date."))
             {
                 throw new Exception("Some error happened while runni WpCli tests (update core), error code is not zero, standard output is:" + osCommandOutput.getStandardOutput());
             }
