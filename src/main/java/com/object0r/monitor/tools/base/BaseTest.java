@@ -151,7 +151,7 @@ public abstract class BaseTest extends Thread
      *
      * @return
      */
-    protected abstract Vector<String> runTests();
+    protected abstract Vector<String> runTests() throws Exception;
 
     protected boolean checkIfValueHasChanged(String variableName, String valueString, int timeUnitValue, TimeUnit timeUnit)
     {
