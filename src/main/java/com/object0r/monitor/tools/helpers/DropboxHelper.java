@@ -4,6 +4,7 @@ import com.google.gson.Gson;
 import com.object0r.toortools.http.HttpHelper;
 import com.object0r.toortools.http.HttpRequestInformation;
 import com.object0r.toortools.http.HttpResult;
+import org.json.JSONObject;
 
 import java.util.HashMap;
 
@@ -77,11 +78,18 @@ public class DropboxHelper
         try
         {
             HttpRequestInformation httpRequestInformation = new HttpRequestInformation();
-            httpRequestInformation.setMethodGet();
-            httpRequestInformation.setUrl("https://api.dropboxapi.com/1/metadata/auto/" + file);
+            httpRequestInformation.setMethodPost();
+            httpRequestInformation.setUrl("https://api.dropboxapi.com/2/files/get_metadata");
+            String jsonString = new JSONObject()
+                    .put("path", file)
+                    .put("include_media_info", false)
+                    .put("include_deleted", false)
+                    .put("include_has_explicit_shared_members", false).toString();
+            httpRequestInformation.setBody(jsonString);
+
             httpRequestInformation.setHeader("User-Agent", "api-explorer-client");
             httpRequestInformation.setHeader("Authorization", "Bearer " + token);
-            httpRequestInformation.setHeader("Content-Type", "");
+            httpRequestInformation.setHeader("Content-Type", "application/json");
 
             HttpResult httpResult;
 
