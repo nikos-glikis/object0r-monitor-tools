@@ -10,6 +10,7 @@ public class AlwaysFailTest extends BaseTest
     public AlwaysFailTest(BaseReporter reporter)
     {
         super(reporter);
+        sendAggregated = true;
     }
 
     public String getTestName()
@@ -17,12 +18,11 @@ public class AlwaysFailTest extends BaseTest
         return "Always Fail";
     }
 
-
-
     protected Vector<String> runTests()
     {
-        Vector<String> errorMessages = new Vector<String>();
-        errorMessages.add("This is always fail test.");
-        return errorMessages;
+        errors.add("This is always fail test.");
+        errors.add("This is always fail test2.");
+        errors.add("This is always fail test3.");
+        return errors;
     }
 }

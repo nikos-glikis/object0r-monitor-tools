@@ -47,13 +47,15 @@ public abstract class BaseTest extends Thread
 
     public void run()
     {
-        if (!shouldRun() && !forceRun) {
+        if (!shouldRun() && !forceRun)
+        {
             return;
         }
         System.out.println("Running " + getTestName() + " (every " + getRunEvery().getCount() + " " + getRunEvery().getTimeUnit() + ")");
         //errors = runTests();
         errors = baseRunTests();
-        if (errors.size() > 0) {
+        if (errors.size() > 0)
+        {
             ConsoleColors.printRed("Sending errors:");
         }
 
@@ -62,32 +64,38 @@ public abstract class BaseTest extends Thread
         set.addAll(errors);
         errors.clear();
         errors.addAll(set);
-
+        String separator = "\n----------------------\n";
         StringBuffer aggregatedErrors = new StringBuffer("");
-        for (String error : errors) {
+        for (String error : errors)
+        {
             System.out.println(error);
-            for (BaseReporter reporter : reporters) {
+            for (BaseReporter reporter : reporters)
+            {
                 aggregatedErrors.append(error);
-                aggregatedErrors.append("\n----------------------\n");
-                if (!sendAggregated) {
+                aggregatedErrors.append(separator);
+                if (!sendAggregated)
+                {
                     reporter.report(getTestReportPrefix() + getTestName(), error);
                 }
             }
         }
-        if (sendAggregated) {
-            for (BaseReporter reporter : reporters) {
-
-                reporter.report(getTestReportPrefix() + getTestName(), aggregatedErrors.toString());
-
+        if (sendAggregated)
+        {
+            for (BaseReporter reporter : reporters)
+            {
+                reporter.report(getTestReportPrefix() + getTestName() + " - " + errors.size() + " errors", aggregatedErrors.toString());
             }
         }
     }
 
     private Vector<String> baseRunTests()
     {
-        try {
+        try
+        {
             runTests();
-        } catch (Exception e) {
+        }
+        catch (Exception e)
+        {
             e.printStackTrace();
             exceptionToError(e);
         }
@@ -103,7 +111,8 @@ public abstract class BaseTest extends Thread
     private boolean shouldRun()
     {
         String alwaysRun = Manager.getProperty(Manager.ALWAYS_RUN);
-        if (alwaysRun != null && alwaysRun.equals("true")) {
+        if (alwaysRun != null && alwaysRun.equals("true"))
+        {
             System.out.println("Should run returning true (Config Override).");
             return true;
         }
@@ -111,20 +120,26 @@ public abstract class BaseTest extends Thread
         String historicValueName = getClass() + "_last_run";
 
         HistoricValue historicValue = HistoricValuesManager.getSaved(historicValueName);
-        if (historicValue == null) {
+        if (historicValue == null)
+        {
             //System.out.println("First time. Returning true");
             markRunned(historicValueName);
             return true;
-        } else {
+        }
+        else
+        {
             Date lastRunnedDate = historicValue.getTime();
             Date dateNow = new Date();
 
             long diff = DateHelper.getDateDiff(lastRunnedDate, dateNow, getRunEvery().getTimeUnit());
-            if (diff >= getRunEvery().getCount()) {
+            if (diff >= getRunEvery().getCount())
+            {
                 //System.out.println("Diff is more than count. Returning true " + diff);
                 markRunned(historicValueName);
                 return true;
-            } else {
+            }
+            else
+            {
                 //System.out.println("Diff is less than count. Returning false " + diff);
                 return false;
             }
@@ -177,29 +192,44 @@ public abstract class BaseTest extends Thread
 
         HistoricValue value = HistoricValuesManager.getSaved(variableName);
 
-        if (value == null) {
+        if (value == null)
+        {
             System.out.println(variableName + " value does not exist. Creating now.");
             HistoricValuesManager.saveValue(valueNow, variableName);
             return true;
-        } else {
-            if (HistoricValuesManager.getDateDiff(value, valueNow, timeUnit) > timeUnitValue) {
-                if (numeric) {
-                    if (value.getValueAsDouble() >= valueNow.getValueAsDouble()) {
+        }
+        else
+        {
+            if (HistoricValuesManager.getDateDiff(value, valueNow, timeUnit) > timeUnitValue)
+            {
+                if (numeric)
+                {
+                    if (value.getValueAsDouble() >= valueNow.getValueAsDouble())
+                    {
                         return false;
-                    } else {
+                    }
+                    else
+                    {
                         HistoricValuesManager.saveValue(valueNow, variableName);
                         return true;
                     }
-                } else {
-                    if (value.getValue().equals(valueNow.getValue())) {
+                }
+                else
+                {
+                    if (value.getValue().equals(valueNow.getValue()))
+                    {
                         return false;
-                    } else {
+                    }
+                    else
+                    {
                         //todo not sure about line below
                         HistoricValuesManager.saveValue(valueNow, variableName);
                         return true;
                     }
                 }
-            } else {
+            }
+            else
+            {
                 return true;
             }
         }
@@ -212,12 +242,16 @@ public abstract class BaseTest extends Thread
 
     protected void triggerErrorIfVariableHasntChanged(String value, String valueName, int idleHours, TimeUnit timeUnit)
     {
-        try {
+        try
+        {
             Integer.parseInt(value);
-            if (!checkIfNumericValueHasIncreased(valueName, value, idleHours, timeUnit)) {
+            if (!checkIfNumericValueHasIncreased(valueName, value, idleHours, timeUnit))
+            {
                 errors.add(valueName + " variable hasn't change in at least " + idleHours + " hours.");
             }
-        } catch (Exception e) {
+        }
+        catch (Exception e)
+        {
             errors.add(valueName + " is not an integer.");
             e.printStackTrace();
         }
@@ -233,13 +267,17 @@ public abstract class BaseTest extends Thread
         Vector<String> files = new Vector<String>();
         String command = "find " + dir;
         OsCommandOutput osCommandOutput = OsHelper.runRemoteCommand(sshConnectionData.getHost(), sshConnectionData.getPort(), command, sshConnectionData.getUser(), sshConnectionData.getDirectory(), sshConnectionData.getPrivateKey());
-        if (osCommandOutput.getExitCode() != 0) {
+        if (osCommandOutput.getExitCode() != 0)
+        {
             errors.add("getDirectoryContents error: " + command + ": " + osCommandOutput.getErrorOutput());
             return files;
-        } else {
+        }
+        else
+        {
             String commandResult = osCommandOutput.getStandardOutput();
             Scanner sc = new Scanner(commandResult);
-            while (sc.hasNext()) {
+            while (sc.hasNext())
+            {
                 files.add(sc.nextLine());
             }
         }
