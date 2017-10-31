@@ -79,7 +79,7 @@ public abstract class BaseTest extends Thread
                 }
             }
         }
-        if (sendAggregated)
+        if (sendAggregated && errors.size() > 0)
         {
             for (BaseReporter reporter : reporters)
             {
