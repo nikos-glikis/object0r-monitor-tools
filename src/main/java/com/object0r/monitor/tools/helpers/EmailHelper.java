@@ -5,11 +5,23 @@ import com.object0r.monitor.tools.datatypes.EmailConnectionData;
 import com.object0r.toortools.Utilities;
 import com.sun.mail.imap.IMAPFolder;
 import com.sun.mail.util.MailSSLSocketFactory;
+import microsoft.exchange.webservices.data.core.ExchangeService;
+import microsoft.exchange.webservices.data.core.PropertySet;
+import microsoft.exchange.webservices.data.core.enumeration.property.BasePropertySet;
+import microsoft.exchange.webservices.data.core.enumeration.property.WellKnownFolderName;
+import microsoft.exchange.webservices.data.core.service.item.Item;
+import microsoft.exchange.webservices.data.core.service.schema.ItemSchema;
+import microsoft.exchange.webservices.data.search.FindItemsResults;
+import microsoft.exchange.webservices.data.search.ItemView;
 
 import javax.mail.*;
+import javax.mail.internet.MimeMessage;
 import javax.mail.internet.MimeMultipart;
 import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.Properties;
 import java.util.Vector;
 
@@ -151,6 +163,34 @@ public class EmailHelper
         //store.close();
 
         return messagesVector;
+    }
+
+    /**
+     * reads the last 100 emails from the server
+     * Even though we read them the mails are still considered unread
+     *
+     * @param service -service object that is used to communicate
+     * @throws Exception - the exception must be handled from whoever is calling the function
+     */
+    public static Vector<MimeMessage> getLatestEmails(ExchangeService service, int count) throws Exception
+    {
+        ItemView view = new ItemView(count);
+
+        FindItemsResults findResults = service.findItems(WellKnownFolderName.Inbox, view);
+
+        Vector<MimeMessage> mimeMessages = new Vector<MimeMessage>();
+
+        for (Object objectItem : findResults.getItems())
+        {
+            Item item = (Item) objectItem;
+            item.load(new PropertySet(BasePropertySet.FirstClassProperties, ItemSchema.MimeContent));
+            String mimeContent = item.getMimeContent().toString();
+            InputStream stream = new ByteArrayInputStream(mimeContent.getBytes(StandardCharsets.UTF_8));
+            MimeMessage mimeMessage = new MimeMessage(null, stream);
+            mimeMessages.add(mimeMessage);
+        }
+        return mimeMessages;
+
     }
 
     public static String getTextFromMessage(Message message) throws Exception
