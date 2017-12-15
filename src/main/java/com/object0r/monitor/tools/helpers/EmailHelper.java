@@ -2,6 +2,7 @@ package com.object0r.monitor.tools.helpers;
 
 
 import com.object0r.monitor.tools.datatypes.EmailConnectionData;
+import com.object0r.monitor.tools.reporters.MapiEmailReporter;
 import com.object0r.toortools.Utilities;
 import com.sun.mail.imap.IMAPFolder;
 import com.sun.mail.util.MailSSLSocketFactory;
@@ -101,7 +102,25 @@ public class EmailHelper
 
     public static Vector<Message> getLatestEmails(EmailConnectionData emailConnectionData, int count) throws Exception
     {
-        return getLatestEmails(emailConnectionData, count, false);
+        if (emailConnectionData.getEmailTypeString().equals("imap"))
+        {
+            return getLatestEmails(emailConnectionData, count, false);
+        }
+        else if (emailConnectionData.getEmailTypeString().equals("mapi"))
+        {
+            ExchangeService service = MapiEmailReporter.initService(
+                    emailConnectionData.getUsername(),
+                    emailConnectionData.getPassword(),
+                    emailConnectionData.getHost()
+            );
+
+            return getLatestEmails(service, count);
+        }
+        else
+        {
+            System.err.println("Invalid email type used on EmailConnectionData.");
+            throw new Exception("Invalid email type used on EmailConnectionData.");
+        }
     }
 
     public static Vector<Message> getLatestEmails(EmailConnectionData emailConnectionData, int count, boolean prefetchHeaders) throws Exception
@@ -172,13 +191,13 @@ public class EmailHelper
      * @param service -service object that is used to communicate
      * @throws Exception - the exception must be handled from whoever is calling the function
      */
-    public static Vector<MimeMessage> getLatestEmails(ExchangeService service, int count) throws Exception
+    public static Vector<Message> getLatestEmails(ExchangeService service, int count) throws Exception
     {
         ItemView view = new ItemView(count);
 
         FindItemsResults findResults = service.findItems(WellKnownFolderName.Inbox, view);
 
-        Vector<MimeMessage> mimeMessages = new Vector<MimeMessage>();
+        Vector<Message> messages = new Vector<Message>();
 
         for (Object objectItem : findResults.getItems())
         {
@@ -186,10 +205,10 @@ public class EmailHelper
             item.load(new PropertySet(BasePropertySet.FirstClassProperties, ItemSchema.MimeContent));
             String mimeContent = item.getMimeContent().toString();
             InputStream stream = new ByteArrayInputStream(mimeContent.getBytes(StandardCharsets.UTF_8));
-            MimeMessage mimeMessage = new MimeMessage(null, stream);
-            mimeMessages.add(mimeMessage);
+            Message message = new MimeMessage(null, stream);
+            messages.add(message);
         }
-        return mimeMessages;
+        return messages;
 
     }
 

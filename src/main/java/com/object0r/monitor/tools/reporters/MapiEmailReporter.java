@@ -18,10 +18,10 @@ public class MapiEmailReporter extends EmailReporter
     private String from;
     private ExchangeService service;
 
-    public MapiEmailReporter(String from, String username, String password)
+    public MapiEmailReporter(String from, String username, String password, String url)
     {
         this.from = from;
-        this.service = initService(username, password);
+        this.service = initService(username, password, url);
     }
 
 
@@ -30,7 +30,7 @@ public class MapiEmailReporter extends EmailReporter
      * @param password -  password for exchange service
      * @return - the exchange service that was created
      */
-    public static ExchangeService initService(String username, String password)
+    public static ExchangeService initService(String username, String password, String url)
     {
         try
         {
@@ -38,9 +38,8 @@ public class MapiEmailReporter extends EmailReporter
             ExchangeCredentials credentials = new WebCredentials(username, password);
             service.setCredentials(credentials);
 
-            //this url must be updated based on your mail URI
             //e.g service.setUrl(new URI("https://outlook.com/ews/Exchange.asmx"));
-            service.setUrl(new URI("https://YOUR-DOMAIN/ews/Exchange.asmx"));
+            service.setUrl(new URI(url));
             return service;
         }
         catch (Exception e)
