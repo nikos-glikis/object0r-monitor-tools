@@ -11,15 +11,18 @@ public class EmailConnectionData
     public enum EmailType
     {
         POP3,
-        IMAP
+        IMAP,
+        MAPI
     }
 
     public String getEmailTypeString()
     {
         if (emailType == EmailType.IMAP) {
             return "imap";
+        } else if (emailType ==  EmailType.MAPI) {
+            return "mapi";
         } else {
-            return "pop3";
+            return  "pop3";
         }
     }
 
