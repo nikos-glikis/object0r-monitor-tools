@@ -13,6 +13,8 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="Maven: com.microsoft.ews-java-api:ews-java-api:2.0" level="project" />
     <orderEntry type="library" name="Maven: org.apache.httpcomponents:httpcore:4.4.1" level="project" />
+    <orderEntry type="library" name="Maven: com.microsoft.ews-java-api:ews-java-api:2.0" level="project" />
+    <orderEntry type="library" name="Maven: org.apache.httpcomponents:httpcore:4.4.1" level="project" />
     <orderEntry type="library" name="Maven: com.object0r.toortools:toortools:1.0.3" level="project" />
     <orderEntry type="library" name="Maven: commons-codec:commons-codec:1.10" level="project" />
     <orderEntry type="library" name="Maven: commons-io:commons-io:2.4" level="project" />

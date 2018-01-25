@@ -12,7 +12,7 @@ abstract public class WordpressUpdatesTest extends BaseTest
 
     protected Vector<String> runTests()
     {
-        Vector<String> errors = new Vector<String>();
+        //Vector<String> errors = new Vector<String>();
         WordpressUpdatesCheck wordpressUpdatesCheck = new WordpressUpdatesCheck(getUsername(), getPassword(), getUrl(), getLoginUrl(), getUserLoginField(), getUserPassField(), getSubmitButtonField());
         try
         {
