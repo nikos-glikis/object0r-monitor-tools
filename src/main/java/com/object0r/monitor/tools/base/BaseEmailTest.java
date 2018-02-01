@@ -10,6 +10,8 @@ import javax.mail.Message;
 import java.util.Date;
 import java.util.Vector;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 abstract public class BaseEmailTest extends BaseTest
 {
@@ -102,6 +104,22 @@ abstract public class BaseEmailTest extends BaseTest
     }
 
     /**
+     * Overloaded getFirstEmailWithSubject to add regex support
+     * Finds email with subject and returns it, or null if it doesn't.
+     *
+     * @param messages     Email Messages
+     * @param subject      - The subject to search for
+     * @param minutesLimit - How many minutes the email is valid.
+     * @return - the message if it was found
+     */
+    protected Message getFirstEmailWithSubject(Vector<Message> messages, String subject, long minutesLimit, TimeUnit timeUnit)
+    {
+        Message message = getFirstEmailWithSubject(messages, subject, minutesLimit, timeUnit, false);
+        return message;
+    }
+
+
+    /**
      * Finds email with subject and returns it, or null if it doesn't.
      * <p>
      * Assumes sorted by date DESC emails.
@@ -111,20 +129,43 @@ abstract public class BaseEmailTest extends BaseTest
      * @param minutesLimit - How many minutes the email is valid.
      * @return A vector with errors.
      */
-    protected Message getFirstEmailWithSubject(Vector<Message> messages, String subject, long minutesLimit, TimeUnit timeUnit)
+    protected Message getFirstEmailWithSubject(Vector<Message> messages, String subject, long minutesLimit, TimeUnit timeUnit, boolean regex)
     {
         Date now = new Date();
         try
         {
+            if (regex)
+            {
+                subject = Pattern.quote(subject);
+            }
             for (Message message : messages)
             {
-                if (message.getSubject().equals(subject))
+                if (regex)
                 {
-                    if (!(DateHelper.getDateDiff(message.getReceivedDate(), now, timeUnit) > minutesLimit))
+                    String subjectRegex = ".*?" + subject + ".*?";
+                    String messageSubject = message.getSubject();
+                    Pattern pattern = Pattern.compile(subjectRegex);
+                    Matcher matcher = pattern.matcher(messageSubject);
+                    if (matcher.find())
                     {
-                        return message;
+                        if (!(DateHelper.getDateDiff(message.getReceivedDate(), now, timeUnit) > minutesLimit))
+                        {
+                            return message;
+                        }
+                    }
+
+                }
+                else
+                {
+                    if (message.getSubject().equals(subject))
+                    {
+                        if (!(DateHelper.getDateDiff(message.getReceivedDate(), now, timeUnit) > minutesLimit))
+                        {
+                            return message;
+                        }
                     }
                 }
+
             }
         }
         catch (Exception e)
@@ -134,7 +175,6 @@ abstract public class BaseEmailTest extends BaseTest
         }
         return null;
     }
-
 
     public BaseEmailTest(BaseReporter reporter)
     {
@@ -154,7 +194,12 @@ abstract public class BaseEmailTest extends BaseTest
      * @param timeUnit
      * @return
      */
-    protected Message checkIfEmailHasBeenReceived(String variableName, EmailConnectionData emailConnectionData, String subject, int emailCount, int timeUnitCount, TimeUnit timeUnit)
+    protected Message checkIfEmailHasBeenReceived(
+            String variableName,
+            EmailConnectionData emailConnectionData,
+            String subject, int emailCount,
+            int timeUnitCount,
+            TimeUnit timeUnit)
     {
         try
         {
@@ -170,12 +215,31 @@ abstract public class BaseEmailTest extends BaseTest
         return null;
     }
 
-    protected Message checkIfEmailHasBeenReceived(String variableName, Vector<Message> emails, String subject, int timeUnitCount, TimeUnit timeUnit)
+    protected Message checkIfEmailHasBeenReceived(
+            String variableName,
+            Vector<Message> emails,
+            String subject,
+            int timeUnitCount,
+            TimeUnit timeUnit
+    )
     {
+        return checkIfEmailHasBeenReceived(variableName, emails, subject, timeUnitCount, timeUnit, false);
+    }
+
+    protected Message checkIfEmailHasBeenReceived(String variableName, Vector<Message> emails, String subject, int timeUnitCount, TimeUnit timeUnit, boolean regex)
+    {
+        Message email;
         try
         {
-
-            Message email = getFirstEmailWithSubject(emails, subject, timeUnitCount, timeUnit);
+            // using Pattern.quote in order to be able to find [] characters in subject using regex
+            if (regex)
+            {
+                email = getFirstEmailWithSubject(emails, subject, timeUnitCount, timeUnit, regex);
+            }
+            else
+            {
+                email = getFirstEmailWithSubject(emails, subject, timeUnitCount, timeUnit);
+            }
 
             if (email != null)
             {
