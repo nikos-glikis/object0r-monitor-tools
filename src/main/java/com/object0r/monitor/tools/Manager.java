@@ -1,6 +1,9 @@
 package com.object0r.monitor.tools;
 
 
+import com.object0r.monitor.tools.base.BaseReporter;
+import com.object0r.monitor.tools.tests.ReportPausedTest;
+
 import java.io.FileInputStream;
 import java.util.Properties;
 import java.util.StringTokenizer;
@@ -40,6 +43,20 @@ public class Manager
                 prop.setProperty(str.nextToken(), str.nextToken());
                 //System.out.println(prop);
             }
+        }
+    }
+
+    public static void reportPaused(BaseReporter reporter)
+    {
+        ReportPausedTest test = new ReportPausedTest(reporter);
+        test.start();
+        try
+        {
+            test.join();
+        }
+        catch (InterruptedException e)
+        {
+            e.printStackTrace();
         }
     }
 }

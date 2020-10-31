@@ -26,6 +26,7 @@ public abstract class BaseTest extends Thread
         return new TimeInterval(1, TimeUnit.HOURS);
     }
 
+    static ArrayList<String> pausedTests = new ArrayList<>();
 
     public BaseTest(BaseReporter reporters, boolean forceRun)
     {
@@ -49,6 +50,12 @@ public abstract class BaseTest extends Thread
     {
         if (!shouldRun() && !forceRun)
         {
+            return;
+        }
+
+        if (isTestPaused())
+        {
+            BaseTest.addTestToPaused(getTestName());
             return;
         }
         System.out.println("Running " + getTestName() + " (every " + getRunEvery().getCount() + " " + getRunEvery().getTimeUnit() + ")");
@@ -87,6 +94,18 @@ public abstract class BaseTest extends Thread
             }
         }
     }
+
+
+    private static void addTestToPaused(String testName)
+    {
+        pausedTests.add(testName);
+    }
+
+    protected static ArrayList<String> getPausedTests()
+    {
+        return pausedTests;
+    }
+
 
     private Vector<String> baseRunTests()
     {
@@ -302,5 +321,10 @@ public abstract class BaseTest extends Thread
     public void setSendAggregated(boolean sendAggregated)
     {
         this.sendAggregated = sendAggregated;
+    }
+
+    public boolean isTestPaused()
+    {
+        return false;
     }
 }
