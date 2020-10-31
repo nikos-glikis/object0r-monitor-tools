@@ -48,16 +48,18 @@ public abstract class BaseTest extends Thread
 
     public void run()
     {
-        if (!shouldRun() && !forceRun)
-        {
-            return;
-        }
 
         if (isTestPaused())
         {
             BaseTest.addTestToPaused(getTestName());
             return;
         }
+
+        if (!shouldRun() && !forceRun)
+        {
+            return;
+        }
+
         System.out.println("Running " + getTestName() + " (every " + getRunEvery().getCount() + " " + getRunEvery().getTimeUnit() + ")");
         //errors = runTests();
         errors = baseRunTests();
