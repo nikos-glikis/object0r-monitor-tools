@@ -49,4 +49,26 @@ abstract public class BaseHardDiskSmartTest extends BaseTest {
         }
         return drives;
     }
+
+    protected void runRaidTests(String ip, String device, int deviceCount) {
+        try {
+            OsCommandOutput osCommandOutput = OsHelper.runRemoteCommand(ip, "mdadm -D /dev/md/" + device, "root", "/", "id_rsa");
+            if (osCommandOutput.getExitCode() != 0) {
+                errors.add("Error while checking raid tests.");
+            } else {
+                if (
+                        !osCommandOutput.getStandardOutput().contains("Active Devices : " + deviceCount) ||
+                                !osCommandOutput.getStandardOutput().contains("Failed Devices : 0") ||
+                                !osCommandOutput.getStandardOutput().contains("Working Devices : " + deviceCount)
+                ) {
+                    errors.add("Error while checking raid tests. Output: \n" + osCommandOutput.getStandardOutput());
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            errors.add("Error while checking raid tests: " + e.toString());
+        }
+
+
+    }
 }
