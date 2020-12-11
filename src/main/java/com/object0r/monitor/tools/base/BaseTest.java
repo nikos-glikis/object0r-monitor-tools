@@ -84,7 +84,7 @@ public abstract class BaseTest extends Thread
                 aggregatedErrors.append(separator);
                 if (!sendAggregated)
                 {
-                    reporter.report(getTestReportPrefix() + getTestName(), error);
+                    reporter.report(getTestReportPrefix() + getTestName(), error + "\nRuns Every: "+this.getRunEvery().toString());
                 }
             }
         }

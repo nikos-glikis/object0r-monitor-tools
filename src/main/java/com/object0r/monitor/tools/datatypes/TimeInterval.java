@@ -8,6 +8,12 @@ public class TimeInterval
     private TimeUnit timeUnit = TimeUnit.HOURS;
     private long count = 24;
 
+    @Override
+    public String toString()
+    {
+        return count + " " + timeUnit;
+    }
+
     public TimeInterval(long count, TimeUnit timeUnit)
     {
         this.count = count;
