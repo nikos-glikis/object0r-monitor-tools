@@ -26,6 +26,11 @@ public abstract class BaseTest extends Thread
         return new TimeInterval(1, TimeUnit.HOURS);
     }
 
+    protected TimeInterval getReportEvery()
+    {
+        return new TimeInterval(1, TimeUnit.SECONDS);
+    }
+
     static ArrayList<String> pausedTests = new ArrayList<>();
 
     public BaseTest(BaseReporter reporters, boolean forceRun)
@@ -67,32 +72,35 @@ public abstract class BaseTest extends Thread
         {
             ConsoleColors.printRed("Sending errors:");
         }
-
-        //clean duplicates
-        Set<String> set = new HashSet<String>();
-        set.addAll(errors);
-        errors.clear();
-        errors.addAll(set);
-        String separator = "\n----------------------\n";
-        StringBuffer aggregatedErrors = new StringBuffer("");
-        for (String error : errors)
+        boolean shouldReport = shouldReport();
+        if (shouldReport)
         {
-            System.out.println(error);
-            for (BaseReporter reporter : reporters)
+            //clean duplicates
+            Set<String> set = new HashSet<String>();
+            set.addAll(errors);
+            errors.clear();
+            errors.addAll(set);
+            String separator = "\n----------------------\n";
+            StringBuffer aggregatedErrors = new StringBuffer("");
+            for (String error : errors)
             {
-                aggregatedErrors.append(error);
-                aggregatedErrors.append(separator);
-                if (!sendAggregated)
+                System.out.println(error);
+                for (BaseReporter reporter : reporters)
                 {
-                    reporter.report(getTestReportPrefix() + getTestName(), error + "\nRuns Every: "+this.getRunEvery().toString());
+                    aggregatedErrors.append(error);
+                    aggregatedErrors.append(separator);
+                    if (!sendAggregated)
+                    {
+                        reporter.report(getTestReportPrefix() + getTestName(), error + "\nRuns Every: " + this.getRunEvery().toString());
+                    }
                 }
             }
-        }
-        if (sendAggregated && errors.size() > 0)
-        {
-            for (BaseReporter reporter : reporters)
+            if (sendAggregated && errors.size() > 0)
             {
-                reporter.report(getTestReportPrefix() + getTestName() + " - " + errors.size() + " errors", aggregatedErrors.toString());
+                for (BaseReporter reporter : reporters)
+                {
+                    reporter.report(getTestReportPrefix() + getTestName() + " - " + errors.size() + " errors", aggregatedErrors.toString());
+                }
             }
         }
     }
@@ -131,6 +139,17 @@ public abstract class BaseTest extends Thread
 
     private boolean shouldRun()
     {
+        return should("_last_run", getRunEvery());
+    }
+
+    private boolean shouldReport()
+    {
+        return should("_last_report",getReportEvery());
+    }
+
+
+    private boolean should(String prefix, TimeInterval timeInterval)
+    {
         String alwaysRun = Manager.getProperty(Manager.ALWAYS_RUN);
         if (alwaysRun != null && alwaysRun.equals("true"))
         {
@@ -138,13 +157,13 @@ public abstract class BaseTest extends Thread
             return true;
         }
 
-        String historicValueName = getClass() + "_last_run";
+        String historicValueName = getClass() + prefix;
 
         HistoricValue historicValue = HistoricValuesManager.getSaved(historicValueName);
         if (historicValue == null)
         {
             //System.out.println("First time. Returning true");
-            markRunned(historicValueName);
+            markRan(historicValueName);
             return true;
         }
         else
@@ -152,11 +171,11 @@ public abstract class BaseTest extends Thread
             Date lastRunnedDate = historicValue.getTime();
             Date dateNow = new Date();
 
-            long diff = DateHelper.getDateDiff(lastRunnedDate, dateNow, getRunEvery().getTimeUnit());
-            if (diff >= getRunEvery().getCount())
+            long diff = DateHelper.getDateDiff(lastRunnedDate, dateNow, timeInterval.getTimeUnit());
+            if (diff >= timeInterval.getCount())
             {
                 //System.out.println("Diff is more than count. Returning true " + diff);
-                markRunned(historicValueName);
+                markRan(historicValueName);
                 return true;
             }
             else
@@ -167,7 +186,7 @@ public abstract class BaseTest extends Thread
         }
     }
 
-    private void markRunned(String historicValueName)
+    private void markRan(String historicValueName)
     {
         HistoricValue historicValue = new HistoricValue(historicValueName);
         HistoricValuesManager.saveValue(historicValue, historicValueName);
