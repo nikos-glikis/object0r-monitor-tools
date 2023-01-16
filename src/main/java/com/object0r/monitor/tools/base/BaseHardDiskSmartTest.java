@@ -20,7 +20,7 @@ abstract public class BaseHardDiskSmartTest extends BaseTest
             OsCommandOutput osCommandOutput = OsHelper.runRemoteCommand(ip, "lsblk | awk '{print $1}'", user, "/", "id_rsa");
             if (osCommandOutput.getExitCode() != 0)
             {
-                errors.add("Error while checking hard disk failure (" + ip + ")");
+                errors.add(getTestName() + " - Error while checking hard disk failure (" + ip + ") " + osCommandOutput.getErrorOutput());
             }
             else
             {
@@ -30,14 +30,14 @@ abstract public class BaseHardDiskSmartTest extends BaseTest
                     osCommandOutput = OsHelper.runRemoteCommand(ip, "smartctl /dev/" + drive + " -a", "root", "/", "id_rsa");
                     if (osCommandOutput.getExitCode() != 0)
                     {
-                        errors.add("Error while checking hard disk failure - drive (" + drive + "): " + osCommandOutput.getErrorOutput());
+                        errors.add(getTestName() + " - Error while checking hard disk failure - drive (" + ip + ":" + drive + "): " + osCommandOutput.getErrorOutput());
                     }
                     else
                     {
                         String output = osCommandOutput.getErrorOutput();
                         if (!output.contains("SMART overall-health self-assessment test result: PASSED") || output.contains("FAILED!"))
                         {
-                            errors.add("Smart drive has failed: (" + ip + "-/dev/" + drive + ") " + osCommandOutput.getStandardOutput() + "\n" + osCommandOutput.getErrorOutput());
+                            errors.add(getTestName() + " - Smart drive has failed: (" + ip + "-/dev/" + drive + ") " + osCommandOutput.getStandardOutput() + "\n" + osCommandOutput.getErrorOutput());
                         }
                     }
                 }
@@ -46,7 +46,7 @@ abstract public class BaseHardDiskSmartTest extends BaseTest
         catch (Exception e)
         {
             e.printStackTrace();
-            errors.add("Error while checking failed hard disks - Exception (" + ip + "): " + e.toString());
+            errors.add(getTestName() + " - Error while checking failed hard disks - Exception (" + ip + "): " + e.toString());
         }
     }
 
@@ -74,7 +74,7 @@ abstract public class BaseHardDiskSmartTest extends BaseTest
             OsCommandOutput osCommandOutput = OsHelper.runRemoteCommand(ip, "mdadm -D /dev/md/" + device, "root", "/", "id_rsa");
             if (osCommandOutput.getExitCode() != 0)
             {
-                errors.add("Error while checking raid tests.");
+                errors.add(getTestName() + " - Error while checking raid tests: " + ip + ":" + device + " " + deviceCount);
             }
             else
             {
@@ -84,14 +84,14 @@ abstract public class BaseHardDiskSmartTest extends BaseTest
                                 !osCommandOutput.getStandardOutput().contains("Working Devices : " + deviceCount)
                 )
                 {
-                    errors.add("Error while checking raid tests. Output: \n" + osCommandOutput.getStandardOutput());
+                    errors.add(getTestName() + " - Error while checking raid tests." + ip + ":" + device + " " + deviceCount + " Output: \n" + osCommandOutput.getStandardOutput());
                 }
             }
         }
         catch (Exception e)
         {
             e.printStackTrace();
-            errors.add("Error while checking raid tests: " + e.toString());
+            errors.add(getTestName() + "Error while checking raid (" + ip + ":" + device + " " + deviceCount + ") tests: " + e.toString());
         }
 
 
