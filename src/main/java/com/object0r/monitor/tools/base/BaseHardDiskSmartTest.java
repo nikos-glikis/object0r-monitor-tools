@@ -5,6 +5,7 @@ import com.object0r.toortools.os.OsHelper;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Scanner;
 import java.util.Vector;
@@ -45,7 +46,12 @@ abstract public class BaseHardDiskSmartTest extends BaseTest
             errors.add(getTestName() + " - Error while checking failed hard disks - Exception (" + ip + "): " + e.toString());
         }
     }
+    protected void checkHardDiskFailures(String ip, String user) {
 
+        //Declare a hashmap, with key string and value integer
+        Map<String, Integer> map = new HashMap<String, Integer>();
+        checkHardDiskFailures(ip, user, map);
+    }
     private void checkJsonDiskFailures(String ip, String drive, Map<String, Integer> knownErrorsMap) throws Exception {
         int expectedErrorsCount = knownErrorsMap.get(drive);
         OsCommandOutput osCommandOutput = OsHelper.runRemoteCommand(ip, "smartctl /dev/" + drive + " -j  -a", "root", "/", "id_rsa");
