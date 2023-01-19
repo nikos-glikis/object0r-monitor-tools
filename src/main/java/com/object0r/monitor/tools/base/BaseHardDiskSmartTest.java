@@ -2,7 +2,10 @@ package com.object0r.monitor.tools.base;
 
 import com.object0r.toortools.os.OsCommandOutput;
 import com.object0r.toortools.os.OsHelper;
+import org.json.JSONArray;
+import org.json.JSONObject;
 
+import java.util.Map;
 import java.util.Scanner;
 import java.util.Vector;
 
@@ -13,40 +16,87 @@ abstract public class BaseHardDiskSmartTest extends BaseTest
         super(reporter);
     }
 
-    protected void checkHardDiskFailures(String ip, String user)
-    {
-        try
-        {
+    protected void checkHardDiskFailures(String ip, String user, Map<String, Integer> knownErrorsMap) {
+        try {
             OsCommandOutput osCommandOutput = OsHelper.runRemoteCommand(ip, "lsblk | awk '{print $1}'", user, "/", "id_rsa");
-            if (osCommandOutput.getExitCode() != 0)
-            {
+            if (osCommandOutput.getExitCode() != 0) {
                 errors.add(getTestName() + " - Error while checking hard disk failure (" + ip + ") " + osCommandOutput.getErrorOutput());
-            }
-            else
-            {
+            } else {
                 Vector<String> drives = getDrivesFromText(osCommandOutput.getStandardOutput());
-                for (String drive : drives)
-                {
+                for (String drive : drives) {
                     osCommandOutput = OsHelper.runRemoteCommand(ip, "smartctl /dev/" + drive + " -a", "root", "/", "id_rsa");
-                    if (osCommandOutput.getExitCode() != 0)
-                    {
-                        errors.add(getTestName() + " - Error while checking hard disk failure - drive (" + ip + ":" + drive + "): " + osCommandOutput.getErrorOutput());
-                    }
-                    else
-                    {
+                    if (osCommandOutput.getExitCode() != 0) {
+                        if (!knownErrorsMap.containsKey(drive)) {
+                            errors.add(getTestName() + " - Error while checking hard disk failure - drive (" + ip + ":" + drive + "): " + osCommandOutput.getErrorOutput());
+                        } else {
+                            checkJsonDiskFailures(ip, drive, knownErrorsMap);
+                        }
+
+                    } else {
                         String output = osCommandOutput.getErrorOutput();
-                        if (!output.contains("SMART overall-health self-assessment test result: PASSED") || output.contains("FAILED!"))
-                        {
+                        if (!output.contains("SMART overall-health self-assessment test result: PASSED") || output.contains("FAILED!")) {
                             errors.add(getTestName() + " - Smart drive has failed: (" + ip + "-/dev/" + drive + ") " + osCommandOutput.getStandardOutput() + "\n" + osCommandOutput.getErrorOutput());
                         }
                     }
                 }
             }
-        }
-        catch (Exception e)
-        {
+        } catch (Exception e) {
             e.printStackTrace();
             errors.add(getTestName() + " - Error while checking failed hard disks - Exception (" + ip + "): " + e.toString());
+        }
+    }
+
+    private void checkJsonDiskFailures(String ip, String drive, Map<String, Integer> knownErrorsMap) throws Exception {
+        int expectedErrorsCount = knownErrorsMap.get(drive);
+        OsCommandOutput osCommandOutput = OsHelper.runRemoteCommand(ip, "smartctl /dev/" + drive + " -j  -a", "root", "/", "id_rsa");
+        String output = osCommandOutput.getErrorOutput();
+
+        //smart_status
+        JSONObject jsonObject = new JSONObject(output);
+        JSONObject smartStatus = jsonObject.getJSONObject("smart_status");
+        boolean passed = smartStatus.getBoolean("passed");
+        if (!passed) {
+            errors.add(getTestName() + " - Error while checking hard disk failure - drive (" + ip + ":" + drive + ") - not passed: " + osCommandOutput.getErrorOutput());
+        }
+
+        //ata_smart_data
+        JSONObject smartData = jsonObject.getJSONObject("ata_smart_data");
+        JSONObject selfTest = smartData.getJSONObject("self_test");
+        JSONObject startStatus = selfTest.getJSONObject("status");
+        passed = startStatus.getBoolean("passed");
+        if (!passed) {
+            errors.add(getTestName() + " - Error while checking hard disk failure - drive (" + ip + ":" + drive + ") - not passed 2: " + osCommandOutput.getErrorOutput());
+        }
+
+        //ata_smart_error_log
+        JSONObject ataSmartErrorLog = jsonObject.getJSONObject("ata_smart_error_log");
+        JSONObject summary = ataSmartErrorLog.getJSONObject("summary");
+        int errorCount = summary.getInt("count");
+        if (errorCount != expectedErrorsCount) {
+            errors.add(getTestName() + " - Error while checking hard disk failure - drive (" + ip + ":" + drive + ") - not passed 3: " + osCommandOutput.getErrorOutput());
+        }
+
+        //ata_smart_self_test_log
+        ataSmartErrorLog = jsonObject.getJSONObject("ata_smart_self_test_log");
+
+        JSONObject standard = ataSmartErrorLog.getJSONObject("standard");
+
+        JSONArray jsonArray = standard.getJSONArray("table");
+        if (jsonArray.length() == 0) {
+            errors.add(getTestName() + " - Error while checking hard disk failure - drive (" + ip + ":" + drive + ") - not passed 4: " + osCommandOutput.getErrorOutput());
+        }
+        //{"error_count_outdated":0,"count":7,"error_count_total":0,"table":[{"lifetime_hours":26579,"type":{"string":"Extended offline","value":2},"status":{"string":"Completed without error","passed":true,"value":0}},{"lifetime_hours":165,"type":{"string":"Extended offline","value":2},"status":{"string":"Completed without error","passed":true,"value":0}},{"lifetime_hours":137,"type":{"string":"Extended offline","value":2},"status":{"string":"Completed without error","passed":true,"value":0}},{"lifetime_hours":46,"type":{"string":"Short offline","value":1},"status":{"string":"Completed without error","passed":true,"value":0}},{"lifetime_hours":45,"type":{"string":"Short offline","value":1},"status":{"string":"Completed without error","passed":true,"value":0}},{"lifetime_hours":43,"type":{"string":"Extended offline","value":2},"status":{"string":"Completed without error","passed":true,"value":0}},{"lifetime_hours":15,"type":{"string":"Extended offline","value":2},"status":{"string":"Completed without error","passed":true,"value":0}}],"revision":1}
+        errorCount = standard.getInt("error_count_total");
+        if (errorCount > 0) {
+            errors.add(getTestName() + " - Error while checking hard disk failure - drive (" + ip + ":" + drive + ") - not passed 5: " + osCommandOutput.getErrorOutput());
+        }
+        for (int i = 0; i < jsonArray.length(); i++) {
+            jsonObject = (JSONObject) jsonArray.get(i);
+            JSONObject status = jsonObject.getJSONObject("status");
+            passed = status.getBoolean("passed");
+            if (!passed) {
+                errors.add(getTestName() + " - Error while checking hard disk failure - drive (" + ip + ":" + drive + ") - not passed 5: " + osCommandOutput.getErrorOutput());
+            }
         }
     }
 
