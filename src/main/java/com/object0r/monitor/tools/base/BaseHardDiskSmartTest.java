@@ -163,7 +163,7 @@ abstract public class BaseHardDiskSmartTest extends BaseTest
     {
         try
         {
-            OsCommandOutput osCommandOutput = OsHelper.runRemoteCommandRetries(ip, port, "mdadm -D /dev/md/" + device, "root", "/", "id_rsa", 3, 2000);
+            OsCommandOutput osCommandOutput = OsHelper.runRemoteCommandRetries(ip, port, "mdadm -D " + device, "root", "/", "id_rsa", 3, 2000);
             if (osCommandOutput.getExitCode() != 0)
             {
                 errors.add(getTestName() + " - Error while checking raid tests: " + ip + ":" + device + " " + deviceCount);
