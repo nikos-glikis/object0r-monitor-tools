@@ -355,4 +355,19 @@ public abstract class BaseTest extends Thread
     {
         return false;
     }
+
+    public boolean hasStarted()
+    {
+        return hasStarted;
+    }
+
+    public boolean hasCompleted()
+    {
+        return hasCompleted;
+    }
+
+    public boolean isShouldRun()
+    {
+        return shouldRun;
+    }
 }
