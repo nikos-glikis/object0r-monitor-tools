@@ -15,6 +15,9 @@ import java.util.concurrent.TimeUnit;
 
 public abstract class BaseTest extends Thread
 {
+    private boolean hasStarted = false;
+    private boolean hasCompleted = false;
+    private boolean shouldRun = false;
     private boolean forceRun = false;
     private String testReportPrefix = "osm - ";
     //protected abstract TimeInterval getRunEvery();
@@ -53,17 +56,20 @@ public abstract class BaseTest extends Thread
 
     public void run()
     {
-
+        hasStarted = true;
         if (isTestPaused())
         {
+            hasCompleted = true;
             BaseTest.addTestToPaused(getTestName());
             return;
         }
 
         if (!shouldRun() && !forceRun)
         {
+            hasCompleted = true;
             return;
         }
+        shouldRun = true;
 
         System.out.println("Running " + getTestName() + " (every " + getRunEvery().getCount() + " " + getRunEvery().getTimeUnit() + ")");
         //errors = runTests();
@@ -103,6 +109,7 @@ public abstract class BaseTest extends Thread
                 }
             }
         }
+        hasCompleted = true;
     }
 
 
@@ -144,7 +151,7 @@ public abstract class BaseTest extends Thread
 
     private boolean shouldReport()
     {
-        return should("_last_report",getReportEvery());
+        return should("_last_report", getReportEvery());
     }
 
 
