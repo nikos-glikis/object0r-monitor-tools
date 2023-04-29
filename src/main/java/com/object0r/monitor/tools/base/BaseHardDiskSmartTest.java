@@ -51,7 +51,7 @@ abstract public class BaseHardDiskSmartTest extends BaseTest
                     }
                     else
                     {
-                        String output = osCommandOutput.getErrorOutput();
+                        String output = osCommandOutput.getStandardOutput();
                         if (!output.contains("SMART overall-health self-assessment test result: PASSED") || output.contains("FAILED!"))
                         {
                             errors.add(getTestName() + " - Smart drive has failed: (" + ip + "-/dev/" + drive + ") " + osCommandOutput.getStandardOutput() + "\n" + osCommandOutput.getErrorOutput());
