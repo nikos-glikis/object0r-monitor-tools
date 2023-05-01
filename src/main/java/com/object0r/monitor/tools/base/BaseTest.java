@@ -10,6 +10,8 @@ import com.object0r.toortools.helpers.DateHelper;
 import com.object0r.toortools.os.OsCommandOutput;
 import com.object0r.toortools.os.OsHelper;
 
+import java.time.LocalDate;
+
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
@@ -58,6 +60,20 @@ public abstract class BaseTest extends Thread
     {
         hasStarted = true;
         if (isTestPaused())
+        {
+            hasCompleted = true;
+            BaseTest.addTestToPaused(getTestName());
+            return;
+        }
+
+        if (isTestPausedUntil())
+        {
+            hasCompleted = true;
+            BaseTest.addTestToPaused(getTestName() + " - " + getPausedUntilDate().toString());
+            return;
+        }
+
+        if (isTestPausedUntil())
         {
             hasCompleted = true;
             BaseTest.addTestToPaused(getTestName());
@@ -369,5 +385,31 @@ public abstract class BaseTest extends Thread
     public boolean isShouldRun()
     {
         return shouldRun;
+    }
+
+
+    // Method to get the pausedUntilDate
+    public LocalDate getPausedUntilDate()
+    {
+        //return LocalDate.of(2021, 4, 23);
+        return null;
+    }
+
+    // Method to check if the test is paused until a certain date
+    public boolean isTestPausedUntil()
+    {
+        LocalDate pausedUntilDate = this.getPausedUntilDate();
+        // If pausedUntilDate is null, return false
+        if (pausedUntilDate == null)
+        {
+            return false;
+        }
+
+        // Get today's date
+        LocalDate today = LocalDate.now();
+
+        // If pausedUntilDate is the same or earlier than today, return false
+        // If pausedUntilDate is later than today, return true
+        return today.isBefore(pausedUntilDate);
     }
 }
