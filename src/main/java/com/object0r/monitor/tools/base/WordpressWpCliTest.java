@@ -17,7 +17,11 @@ abstract public class WordpressWpCliTest extends BaseTest
     {
         try
         {
-            OsCommandOutput osCommandOutput = OsHelper.runRemoteCommand(getHost(), getPort(), "su -  " + getUser() + " -c 'cd " + getPath() + " && wp core update'", getSshUser(), getPath(), getPrivateKeyPath());
+            OsCommandOutput osCommandOutput = OsHelper.runRemoteCommandRetries
+                    (
+                            getHost(), getPort(), "su -  " + getUser() + " -c 'cd " + getPath() + " && wp core update'", getSshUser(), getPath(), getPrivateKeyPath()
+                            , 5, 500
+                    );
             if (osCommandOutput.getExitCode() != 0)
             {
                 throw new Exception(getTestName() + " - Some error happened while runni WpCli tests (update core), error code is not zero, error output is:" + osCommandOutput.getErrorOutput());
@@ -27,7 +31,10 @@ abstract public class WordpressWpCliTest extends BaseTest
                 throw new Exception(getTestName() + " - Some error happened while runni WpCli tests (update core), error code is not zero, standard output is:" + osCommandOutput.getStandardOutput());
             }
 
-            osCommandOutput = OsHelper.runRemoteCommand(getHost(), getPort(), "su - " + getUser() + " -c ' cd " + getPath() + " &&  wp plugin update --all'", getSshUser(), getPath(), getPrivateKeyPath());
+            osCommandOutput = OsHelper.runRemoteCommandRetries
+                    (
+                            getHost(), getPort(), "su - " + getUser() + " -c ' cd " + getPath() + " &&  wp plugin update --all'", getSshUser(), getPath(), getPrivateKeyPath(), 5, 500
+                    );
             if (osCommandOutput.getExitCode() != 0)
             {
                 throw new Exception(getTestName() + " - Some error happened while runni WpCli tests (update plugin), error code is not zero, error output is:" + osCommandOutput.getErrorOutput());
@@ -37,7 +44,7 @@ abstract public class WordpressWpCliTest extends BaseTest
                 throw new Exception(getTestName() + " - Some error happened while runni WpCli tests (update plugin), error code is not zero, standard output is:" + osCommandOutput.getStandardOutput());
             }
 
-            osCommandOutput = OsHelper.runRemoteCommand(getHost(), getPort(), "su - " + getUser() + " -c ' cd " + getPath() + " && wp theme update --all'", getSshUser(), getPath(), getPrivateKeyPath());
+            osCommandOutput = OsHelper.runRemoteCommandRetries(getHost(), getPort(), "su - " + getUser() + " -c ' cd " + getPath() + " && wp theme update --all'", getSshUser(), getPath(), getPrivateKeyPath(), 5, 500);
             if (osCommandOutput.getExitCode() != 0)
             {
                 throw new Exception(getTestName() + " - Some error happened while runni WpCli tests (update theme), error code is not zero, error output is:" + osCommandOutput.getErrorOutput());
