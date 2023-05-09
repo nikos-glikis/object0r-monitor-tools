@@ -12,6 +12,7 @@ import com.object0r.toortools.os.OsHelper;
 
 import java.time.LocalDate;
 
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
@@ -411,5 +412,18 @@ public abstract class BaseTest extends Thread
         // If pausedUntilDate is the same or earlier than today, return false
         // If pausedUntilDate is later than today, return true
         return today.isBefore(pausedUntilDate);
+    }
+
+    public long errorAddAfter(int year, int month, int day, String error) {
+        if (year <= 2022 || month < 1 || month > 12 || day < 1 || day > 31) {
+            throw new IllegalArgumentException("Invalid date");
+        }
+        LocalDate currentDate = LocalDate.now();
+        LocalDate specifiedDate = LocalDate.of(year, month, day);
+        long daysBetween = ChronoUnit.DAYS.between(currentDate, specifiedDate);
+        if (daysBetween < 0) {
+            errors.add(error);
+        }
+        return daysBetween;
     }
 }
