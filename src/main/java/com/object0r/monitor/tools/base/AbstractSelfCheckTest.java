@@ -42,6 +42,7 @@ public abstract class AbstractSelfCheckTest extends BaseTest
     @Override
     protected TimeInterval getRunEvery()
     {
+        //This exists in both projects
         return new TimeInterval(30, TimeUnit.MINUTES);
     }
 
@@ -74,7 +75,9 @@ public abstract class AbstractSelfCheckTest extends BaseTest
 
     protected long getEarliestValidRunTimestamp()
     {
+        // Create a LocalDateTime object for July 7, 2024
         LocalDateTime july7_2024 = LocalDateTime.of(2024, 7, 7, 0, 0);
+        // Convert July 7, 2024 to a Unix timestamp
         return july7_2024.atZone(ZoneId.systemDefault()).toInstant().getEpochSecond();
     }
 
@@ -175,11 +178,14 @@ public abstract class AbstractSelfCheckTest extends BaseTest
     {
         try
         {
+            // Convert lastBuild to a long value
             long lastBuildTimestamp = Long.parseLong(lastBuild);
+            // Check if lastBuildTimestamp is later than July 7, 2024
             return lastBuildTimestamp > getEarliestValidRunTimestamp();
         }
         catch (NumberFormatException | DateTimeParseException e)
         {
+            // Handle the case where lastBuild is not a valid long value or date parsing fails
             e.printStackTrace();
             return false;
         }
