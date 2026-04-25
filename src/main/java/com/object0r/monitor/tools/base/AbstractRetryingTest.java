@@ -10,7 +10,7 @@ public abstract class AbstractRetryingTest extends BaseTest
     }
 
     @FunctionalInterface
-    protected interface RetryableCheck
+    public interface RetryableCheck
     {
         Vector<String> run() throws Exception;
     }
@@ -27,39 +27,50 @@ public abstract class AbstractRetryingTest extends BaseTest
 
     protected void retry(RetryableCheck action)
     {
-        retry(getMaxRetries(), getRetryDelayMs(), action);
+        retry("retryable check", getMaxRetries(), getRetryDelayMs(), action);
     }
 
     protected void retry(int maxRetries, int delayMs, RetryableCheck action)
     {
-        retry(maxRetries, delayMs, action, false, false);
+        retry("retryable check", maxRetries, delayMs, action, false, false, false);
     }
 
     protected void retry(int maxRetries, int delayMs, RetryableCheck action, boolean increasingDelay)
     {
-        retry(maxRetries, delayMs, action, increasingDelay, false);
+        retry("retryable check", maxRetries, delayMs, action, increasingDelay, false, false);
     }
 
     protected void retry(int maxRetries, int delayMs, RetryableCheck action, boolean increasingDelay, boolean exponential)
     {
-        retry(maxRetries, delayMs, action, increasingDelay, exponential, false);
+        retry("retryable check", maxRetries, delayMs, action, increasingDelay, exponential, false);
     }
 
     protected void retry(int maxRetries, int delayMs, RetryableCheck action, boolean increasingDelay, boolean exponential, boolean zeroFirstIncreasingDelay)
     {
+        retry("retryable check", maxRetries, delayMs, action, increasingDelay, exponential, zeroFirstIncreasingDelay);
+    }
+
+    protected void retry(String operationName, int maxRetries, int delayMs, RetryableCheck action)
+    {
+        retry(operationName, maxRetries, delayMs, action, false, false, false);
+    }
+
+    protected void retry(String operationName, int maxRetries, int delayMs, RetryableCheck action, boolean increasingDelay, boolean exponential, boolean zeroFirstIncreasingDelay)
+    {
+        String operation = operationName == null || operationName.trim().isEmpty() ? "retryable check" : operationName.trim();
         if (action == null)
         {
-            errors.add(getTestName() + " - Retryable check action is null");
+            errors.add(getTestName() + " - " + operation + " action is null");
             return;
         }
         if (maxRetries <= 0)
         {
-            errors.add(getTestName() + " - Invalid retry config: maxRetries=" + maxRetries);
+            errors.add(getTestName() + " - Invalid retry config for " + operation + ": maxRetries=" + maxRetries);
             return;
         }
         if (delayMs < 0)
         {
-            errors.add(getTestName() + " - Invalid retry config: delayMs=" + delayMs);
+            errors.add(getTestName() + " - Invalid retry config for " + operation + ": delayMs=" + delayMs);
             return;
         }
 
@@ -73,7 +84,7 @@ public abstract class AbstractRetryingTest extends BaseTest
                 if (attemptErrors == null)
                 {
                     lastErrors = new Vector<String>();
-                    lastErrors.add(getTestName() + " - Retryable check returned null errors vector on attempt " + (attempt + 1) + "/" + maxRetries);
+                    lastErrors.add(getTestName() + " - " + operation + " returned null errors vector on attempt " + (attempt + 1) + "/" + maxRetries);
                 }
                 else if (attemptErrors.isEmpty())
                 {
@@ -81,14 +92,14 @@ public abstract class AbstractRetryingTest extends BaseTest
                 }
                 else
                 {
-                    lastErrors = attemptErrors;
+                    lastErrors = new Vector<String>(attemptErrors);
                 }
             }
             catch (Throwable t)
             {
                 t.printStackTrace();
                 lastErrors = new Vector<String>();
-                lastErrors.add(getTestName() + " - Error happened while running retryable check on attempt " + (attempt + 1) + "/" + maxRetries + ": " + t.toString());
+                lastErrors.add(getTestName() + " - Error happened while running " + operation + " on attempt " + (attempt + 1) + "/" + maxRetries + ": " + t.toString());
             }
 
             if (attempt < maxRetries - 1)
@@ -114,7 +125,7 @@ public abstract class AbstractRetryingTest extends BaseTest
                 {
                     Thread.currentThread().interrupt();
                     errors.addAll(lastErrors);
-                    errors.add(getTestName() + " - Retry sleep interrupted on attempt " + (attempt + 1) + "/" + maxRetries + ": " + e.getMessage());
+                    errors.add(getTestName() + " - Retry sleep interrupted for " + operation + " on attempt " + (attempt + 1) + "/" + maxRetries + ": " + e.getMessage());
                     return;
                 }
             }
