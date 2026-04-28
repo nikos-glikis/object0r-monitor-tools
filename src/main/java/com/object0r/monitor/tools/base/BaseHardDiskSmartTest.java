@@ -22,7 +22,18 @@ abstract public class BaseHardDiskSmartTest extends BaseTest
         checkHardDiskFailures(ip, 22, user, knownErrorsMap);
     }
 
+    protected void checkHardDiskFailures(String ip, String user, String serverName)
+    {
+        Map<String, Integer> map = new HashMap<String, Integer>();
+        checkHardDiskFailures(ip, 22, user, serverName, map);
+    }
+
     protected void checkHardDiskFailures(String ip, int port, String user, Map<String, Integer> knownErrorsMap)
+    {
+        checkHardDiskFailures(ip, port, user, null, knownErrorsMap);
+    }
+
+    protected void checkHardDiskFailures(String ip, int port, String user, String serverName, Map<String, Integer> knownErrorsMap)
     {
         try
         {
