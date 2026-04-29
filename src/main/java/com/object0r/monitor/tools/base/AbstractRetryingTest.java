@@ -27,50 +27,42 @@ public abstract class AbstractRetryingTest extends BaseTest
 
     protected void retry(RetryableCheck action)
     {
-        retry("retryable check", getMaxRetries(), getRetryDelayMs(), action);
+        retry(action, getMaxRetries(), getRetryDelayMs());
     }
 
-    protected void retry(int maxRetries, int delayMs, RetryableCheck action)
+    protected void retry(RetryableCheck action, int maxRetries, int delayMs)
     {
-        retry("retryable check", maxRetries, delayMs, action, false, false, false);
+        retry(action, maxRetries, delayMs, false, false, false);
     }
 
-    protected void retry(int maxRetries, int delayMs, RetryableCheck action, boolean increasingDelay)
+    protected void retry(RetryableCheck action, int maxRetries, int delayMs, boolean increasingDelay)
     {
-        retry("retryable check", maxRetries, delayMs, action, increasingDelay, false, false);
+        retry(action, maxRetries, delayMs, increasingDelay, false, false);
     }
 
-    protected void retry(int maxRetries, int delayMs, RetryableCheck action, boolean increasingDelay, boolean exponential)
+    protected void retry(RetryableCheck action, int maxRetries, int delayMs, boolean increasingDelay, boolean exponential)
     {
-        retry("retryable check", maxRetries, delayMs, action, increasingDelay, exponential, false);
+        retry(action, maxRetries, delayMs, increasingDelay, exponential, false);
     }
 
-    protected void retry(int maxRetries, int delayMs, RetryableCheck action, boolean increasingDelay, boolean exponential, boolean zeroFirstIncreasingDelay)
+    protected void retry(RetryableCheck action, int maxRetries, int delayMs, boolean increasingDelay, boolean exponential, boolean zeroFirstIncreasingDelay)
     {
-        retry("retryable check", maxRetries, delayMs, action, increasingDelay, exponential, zeroFirstIncreasingDelay);
-    }
-
-    protected void retry(String operationName, int maxRetries, int delayMs, RetryableCheck action)
-    {
-        retry(operationName, maxRetries, delayMs, action, false, false, false);
-    }
-
-    protected void retry(String operationName, int maxRetries, int delayMs, RetryableCheck action, boolean increasingDelay, boolean exponential, boolean zeroFirstIncreasingDelay)
-    {
-        String operation = operationName == null || operationName.trim().isEmpty() ? "retryable check" : operationName.trim();
         if (action == null)
         {
-            errors.add(getTestName() + " - " + operation + " action is null");
+            String caller = getRetryCaller();
+            errors.add(getTestName() + " - retry action is null from " + caller);
             return;
         }
         if (maxRetries <= 0)
         {
-            errors.add(getTestName() + " - Invalid retry config for " + operation + ": maxRetries=" + maxRetries);
+            String caller = getRetryCaller();
+            errors.add(getTestName() + " - invalid retry config from " + caller + ": maxRetries=" + maxRetries);
             return;
         }
         if (delayMs < 0)
         {
-            errors.add(getTestName() + " - Invalid retry config for " + operation + ": delayMs=" + delayMs);
+            String caller = getRetryCaller();
+            errors.add(getTestName() + " - invalid retry config from " + caller + ": delayMs=" + delayMs);
             return;
         }
 
@@ -83,8 +75,9 @@ public abstract class AbstractRetryingTest extends BaseTest
                 Vector<String> attemptErrors = action.run();
                 if (attemptErrors == null)
                 {
+                    String caller = getRetryCaller();
                     lastErrors = new Vector<String>();
-                    lastErrors.add(getTestName() + " - " + operation + " returned null errors vector on attempt " + (attempt + 1) + "/" + maxRetries);
+                    lastErrors.add(getTestName() + " - retry returned null errors vector from " + caller + " on attempt " + (attempt + 1) + "/" + maxRetries);
                 }
                 else if (attemptErrors.isEmpty())
                 {
@@ -97,9 +90,10 @@ public abstract class AbstractRetryingTest extends BaseTest
             }
             catch (Throwable t)
             {
+                String caller = getRetryCaller();
                 t.printStackTrace();
                 lastErrors = new Vector<String>();
-                lastErrors.add(getTestName() + " - Error happened while running " + operation + " on attempt " + (attempt + 1) + "/" + maxRetries + ": " + t.toString());
+                lastErrors.add(getTestName() + " - error happened while running retry from " + caller + " on attempt " + (attempt + 1) + "/" + maxRetries + ": " + t.toString());
             }
 
             if (attempt < maxRetries - 1)
@@ -123,14 +117,30 @@ public abstract class AbstractRetryingTest extends BaseTest
                 }
                 catch (InterruptedException e)
                 {
+                    String caller = getRetryCaller();
                     Thread.currentThread().interrupt();
                     errors.addAll(lastErrors);
-                    errors.add(getTestName() + " - Retry sleep interrupted for " + operation + " on attempt " + (attempt + 1) + "/" + maxRetries + ": " + e.getMessage());
+                    errors.add(getTestName() + " - retry sleep interrupted from " + caller + " on attempt " + (attempt + 1) + "/" + maxRetries + ": " + e.getMessage());
                     return;
                 }
             }
         }
 
         errors.addAll(lastErrors);
+    }
+
+    private String getRetryCaller()
+    {
+        StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
+        String retryClassName = AbstractRetryingTest.class.getName();
+        for (StackTraceElement element : stackTrace)
+        {
+            String className = element.getClassName();
+            if (!className.equals(Thread.class.getName()) && !className.equals(retryClassName))
+            {
+                return className + "." + element.getMethodName() + ":" + element.getLineNumber();
+            }
+        }
+        return "unknown caller";
     }
 }
