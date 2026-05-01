@@ -31,7 +31,7 @@ public abstract class AbstractPersonalTest extends BaseTest
         {
             if (!extraMessage.matches("[a-zA-Z0-9\\s\\p{Punct}]*"))
             {
-                throw new IllegalArgumentException("Extra message contains invalid characters.");
+                throw new Exception("Extra message contains invalid characters.");
             }
 
             String monitorUrl = getPersonalMonitorUrl();

@@ -416,7 +416,8 @@ public abstract class BaseTest extends Thread
 
     public long errorAddAfter(int year, int month, int day, String error) {
         if (year <= 2022 || month < 1 || month > 12 || day < 1 || day > 31) {
-            throw new IllegalArgumentException("Invalid date");
+            errors.add("Invalid date for delayed error: " + year + "-" + month + "-" + day + " " + error);
+            return 0;
         }
         LocalDate currentDate = LocalDate.now();
         LocalDate specifiedDate = LocalDate.of(year, month, day);

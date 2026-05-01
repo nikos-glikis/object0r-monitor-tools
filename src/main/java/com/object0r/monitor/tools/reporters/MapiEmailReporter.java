@@ -18,7 +18,7 @@ public class MapiEmailReporter extends EmailReporter
     private String from;
     private ExchangeService service;
 
-    public MapiEmailReporter(String from, String username, String password, String url)
+    public MapiEmailReporter(String from, String username, String password, String url) throws Exception
     {
         this.from = from;
         this.service = initService(username, password, url);
@@ -30,7 +30,7 @@ public class MapiEmailReporter extends EmailReporter
      * @param password -  password for exchange service
      * @return - the exchange service that was created
      */
-    public static ExchangeService initService(String username, String password, String url)
+    public static ExchangeService initService(String username, String password, String url) throws Exception
     {
         try
         {
@@ -45,7 +45,7 @@ public class MapiEmailReporter extends EmailReporter
         catch (Exception e)
         {
             e.printStackTrace();
-            throw new RuntimeException("Failed to initialize exchange service");
+            throw new Exception("Failed to initialize exchange service", e);
         }
 
     }

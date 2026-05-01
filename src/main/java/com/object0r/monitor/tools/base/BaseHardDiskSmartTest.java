@@ -33,14 +33,10 @@ abstract public class BaseHardDiskSmartTest extends BaseTest
         {
             BaseHardDiskSmart.checkHardDiskFailures(ip, port, user, serverName, knownErrorsMap);
         }
-        catch (RuntimeException e)
-        {
-            throw failure(getTestName() + " - " + e.getMessage(), e);
-        }
         catch (Exception e)
         {
             e.printStackTrace();
-            throw failure(getTestName() + " - Error while checking failed hard disks - Exception (" + ip + "): " + e.toString(), e);
+            errors.add(getTestName() + " - Error while checking failed hard disks - Exception (" + ip + "): " + e.getMessage());
         }
     }
 
@@ -63,26 +59,12 @@ abstract public class BaseHardDiskSmartTest extends BaseTest
         {
             BaseHardDiskSmart.runRaidTests(ip, port, device, deviceCount);
         }
-        catch (RuntimeException e)
-        {
-            throw failure(getTestName() + " - " + e.getMessage(), e);
-        }
         catch (Exception e)
         {
             e.printStackTrace();
-            throw failure(getTestName() + "Error while checking raid (" + ip + ":" + device + " " + deviceCount + ") tests: " + e.toString(), e);
+            errors.add(getTestName() + " - Error while checking raid (" + ip + ":" + device + " " + deviceCount + ") tests: " + e.getMessage());
         }
 
 
-    }
-
-    private RuntimeException failure(String message)
-    {
-        return new IllegalStateException(message);
-    }
-
-    private RuntimeException failure(String message, Exception cause)
-    {
-        return new IllegalStateException(message, cause);
     }
 }

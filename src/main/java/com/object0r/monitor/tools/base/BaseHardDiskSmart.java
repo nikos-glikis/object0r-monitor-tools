@@ -12,23 +12,23 @@ import java.util.Vector;
 
 public class BaseHardDiskSmart
 {
-    public static void checkHardDiskFailures(String ip, String user, Map<String, Integer> knownErrorsMap)
+    public static void checkHardDiskFailures(String ip, String user, Map<String, Integer> knownErrorsMap) throws Exception
     {
         checkHardDiskFailures(ip, 22, user, knownErrorsMap);
     }
 
-    public static void checkHardDiskFailures(String ip, String user, String serverName)
+    public static void checkHardDiskFailures(String ip, String user, String serverName) throws Exception
     {
         Map<String, Integer> map = new HashMap<String, Integer>();
         checkHardDiskFailures(ip, 22, user, serverName, map);
     }
 
-    public static void checkHardDiskFailures(String ip, int port, String user, Map<String, Integer> knownErrorsMap)
+    public static void checkHardDiskFailures(String ip, int port, String user, Map<String, Integer> knownErrorsMap) throws Exception
     {
         checkHardDiskFailures(ip, port, user, null, knownErrorsMap);
     }
 
-    public static void checkHardDiskFailures(String ip, int port, String user, String serverName, Map<String, Integer> knownErrorsMap)
+    public static void checkHardDiskFailures(String ip, int port, String user, String serverName, Map<String, Integer> knownErrorsMap) throws Exception
     {
         try
         {
@@ -68,10 +68,6 @@ public class BaseHardDiskSmart
                 }
             }
         }
-        catch (RuntimeException e)
-        {
-            throw e;
-        }
         catch (Exception e)
         {
             e.printStackTrace();
@@ -79,7 +75,7 @@ public class BaseHardDiskSmart
         }
     }
 
-    public static void checkHardDiskFailures(String ip, String user)
+    public static void checkHardDiskFailures(String ip, String user) throws Exception
     {
 
         //Declare a hashmap, with key string and value integer
@@ -170,14 +166,14 @@ public class BaseHardDiskSmart
         return drives;
     }
 
-    public static void runRaidTests(String ip, int port, String device, int deviceCount)
+    public static void runRaidTests(String ip, int port, String device, int deviceCount) throws Exception
     {
         try
         {
             OsCommandOutput osCommandOutput = OsHelper.runRemoteCommandRetries(ip, port, "mdadm -D " + device, "root", "/", "id_rsa", 3, 2000);
             if (osCommandOutput.getExitCode() != 0)
             {
-                throw failure("Error while checking raid tests: " + ip + ":" + device + " " + deviceCount);
+                throw new Exception("Error while checking raid tests: " + ip + ":" + device + " " + deviceCount);
             }
             else
             {
@@ -187,29 +183,25 @@ public class BaseHardDiskSmart
                                 !osCommandOutput.getStandardOutput().contains("Working Devices : " + deviceCount)
                 )
                 {
-                    throw failure("Error while checking raid tests." + ip + ":" + device + " " + deviceCount + " Output: \n" + osCommandOutput.getStandardOutput());
+                    throw new Exception("Error while checking raid tests." + ip + ":" + device + " " + deviceCount + " Output: \n" + osCommandOutput.getStandardOutput());
                 }
             }
-        }
-        catch (RuntimeException e)
-        {
-            throw e;
         }
         catch (Exception e)
         {
             e.printStackTrace();
-            throw failure("Error while checking raid (" + ip + ":" + device + " " + deviceCount + ") tests: " + e.toString(), e);
+            throw new Exception("Error while checking raid (" + ip + ":" + device + " " + deviceCount + ") tests: " + e.toString(), e);
         }
     }
 
-    private static RuntimeException failure(String message)
+    private static Exception failure(String message)
     {
-        return new IllegalStateException(message);
+        return new Exception(message);
     }
 
-    private static RuntimeException failure(String message, Exception cause)
+    private static Exception failure(String message, Exception cause)
     {
-        return new IllegalStateException(message, cause);
+        return new Exception(message, cause);
     }
 
     private static String getVisibleOutput(String standardOutput, String errorOutput)
