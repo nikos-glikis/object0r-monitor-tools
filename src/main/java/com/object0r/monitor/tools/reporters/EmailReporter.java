@@ -14,7 +14,7 @@ public class EmailReporter extends BaseReporter
         {
             if (OsHelper.isLinux())
             {
-                SendEmailHelper.sendEmail(recipient, "osm - " + body, body);
+                SendEmailHelper.sendEmail(recipient, formatSubject("osm - " + subject, 500), body);
             }
             else
             {
@@ -22,6 +22,19 @@ public class EmailReporter extends BaseReporter
             }
         }
         return true;
+    }
+
+    private String formatSubject(String subject, int maxLength)
+    {
+        if (subject == null)
+        {
+            return "";
+        }
+        if (subject.length() <= maxLength)
+        {
+            return subject;
+        }
+        return subject.substring(0, maxLength - 3) + "...";
     }
 
     protected boolean verifyRecipient(String recipient)
