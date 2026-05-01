@@ -7,3 +7,4 @@
 - Reserve unchecked exceptions only for true programmer bugs where crashing fast is intentional and not a monitor alert path.
 - When changing helper method signatures, check downstream monitor callers for compile impact.
 - Never run `mvn install` manually for this repo unless the user explicitly asks for it. Compile locally with `mvn test -DskipTests`; publishing/syncing/installing the dependency is a separate user-controlled step.
+- Deploy with `mvn -U clean deploy -Dgpg.skip=true` (note for the user.)
