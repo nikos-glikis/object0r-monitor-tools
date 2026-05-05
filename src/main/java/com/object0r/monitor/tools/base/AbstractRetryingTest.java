@@ -1,6 +1,7 @@
 package com.object0r.monitor.tools.base;
 
 import java.util.Vector;
+import java.util.concurrent.TimeUnit;
 
 public abstract class AbstractRetryingTest extends BaseTest
 {
@@ -27,43 +28,71 @@ public abstract class AbstractRetryingTest extends BaseTest
 
     protected void retry(RetryableCheck action)
     {
-        retry(action, getMaxRetries(), getRetryDelayMs());
+        errors.addAll(getErrorsAfterRetry(action));
     }
 
     protected void retry(RetryableCheck action, int maxRetries, int delayMs)
     {
-        retry(action, maxRetries, delayMs, false, false, false);
+        errors.addAll(getErrorsAfterRetry(action, maxRetries, delayMs));
     }
 
     protected void retry(RetryableCheck action, int maxRetries, int delayMs, boolean increasingDelay)
     {
-        retry(action, maxRetries, delayMs, increasingDelay, false, false);
+        errors.addAll(getErrorsAfterRetry(action, maxRetries, delayMs, increasingDelay));
     }
 
     protected void retry(RetryableCheck action, int maxRetries, int delayMs, boolean increasingDelay, boolean exponential)
     {
-        retry(action, maxRetries, delayMs, increasingDelay, exponential, false);
+        errors.addAll(getErrorsAfterRetry(action, maxRetries, delayMs, increasingDelay, exponential));
     }
 
     protected void retry(RetryableCheck action, int maxRetries, int delayMs, boolean increasingDelay, boolean exponential, boolean zeroFirstIncreasingDelay)
     {
+        errors.addAll(getErrorsAfterRetry(action, maxRetries, delayMs, increasingDelay, exponential, zeroFirstIncreasingDelay));
+    }
+
+    private Vector<String> getErrorsAfterRetry(RetryableCheck action)
+    {
+        return getErrorsAfterRetry(action, getMaxRetries(), getRetryDelayMs());
+    }
+
+    private Vector<String> getErrorsAfterRetry(RetryableCheck action, int maxRetries, int delayMs)
+    {
+        return getErrorsAfterRetry(action, maxRetries, delayMs, false, false, false);
+    }
+
+    private Vector<String> getErrorsAfterRetry(RetryableCheck action, int maxRetries, int delayMs, boolean increasingDelay)
+    {
+        return getErrorsAfterRetry(action, maxRetries, delayMs, increasingDelay, false, false);
+    }
+
+    private Vector<String> getErrorsAfterRetry(RetryableCheck action, int maxRetries, int delayMs, boolean increasingDelay, boolean exponential)
+    {
+        return getErrorsAfterRetry(action, maxRetries, delayMs, increasingDelay, exponential, false);
+    }
+
+    private Vector<String> getErrorsAfterRetry(RetryableCheck action, int maxRetries, int delayMs, boolean increasingDelay, boolean exponential, boolean zeroFirstIncreasingDelay)
+    {
         if (action == null)
         {
             String caller = getRetryCaller();
-            errors.add(getTestName() + " - retry action is null from " + caller);
-            return;
+            Vector<String> configErrors = new Vector<String>();
+            configErrors.add(getTestName() + " - retry action is null from " + caller);
+            return configErrors;
         }
         if (maxRetries <= 0)
         {
             String caller = getRetryCaller();
-            errors.add(getTestName() + " - invalid retry config from " + caller + ": maxRetries=" + maxRetries);
-            return;
+            Vector<String> configErrors = new Vector<String>();
+            configErrors.add(getTestName() + " - invalid retry config from " + caller + ": maxRetries=" + maxRetries);
+            return configErrors;
         }
         if (delayMs < 0)
         {
             String caller = getRetryCaller();
-            errors.add(getTestName() + " - invalid retry config from " + caller + ": delayMs=" + delayMs);
-            return;
+            Vector<String> configErrors = new Vector<String>();
+            configErrors.add(getTestName() + " - invalid retry config from " + caller + ": delayMs=" + delayMs);
+            return configErrors;
         }
 
         Vector<String> lastErrors = new Vector<String>();
@@ -81,7 +110,7 @@ public abstract class AbstractRetryingTest extends BaseTest
                 }
                 else if (attemptErrors.isEmpty())
                 {
-                    return;
+                    return new Vector<String>();
                 }
                 else
                 {
@@ -119,14 +148,25 @@ public abstract class AbstractRetryingTest extends BaseTest
                 {
                     String caller = getRetryCaller();
                     Thread.currentThread().interrupt();
-                    errors.addAll(lastErrors);
-                    errors.add(getTestName() + " - retry sleep interrupted from " + caller + " on attempt " + (attempt + 1) + "/" + maxRetries + ": " + e.getMessage());
-                    return;
+                    Vector<String> interruptedErrors = new Vector<String>(lastErrors);
+                    interruptedErrors.add(getTestName() + " - retry sleep interrupted from " + caller + " on attempt " + (attempt + 1) + "/" + maxRetries + ": " + e.getMessage());
+                    return interruptedErrors;
                 }
             }
         }
 
-        errors.addAll(lastErrors);
+        return lastErrors;
+    }
+
+    protected void retryAndAlertIfFailurePersists(String variableName, int timeUnitValue, TimeUnit timeUnit, RetryableCheck action)
+    {
+        retryAndAlertIfFailurePersists(variableName, timeUnitValue, timeUnit, action, getMaxRetries(), getRetryDelayMs());
+    }
+
+    protected void retryAndAlertIfFailurePersists(String variableName, int timeUnitValue, TimeUnit timeUnit, RetryableCheck action, int maxRetries, int delayMs)
+    {
+        Vector<String> finalErrors = getErrorsAfterRetry(action, maxRetries, delayMs);
+        errors.addAll(getErrorsIfFailurePersists(variableName, finalErrors, timeUnitValue, timeUnit));
     }
 
     private String getRetryCaller()

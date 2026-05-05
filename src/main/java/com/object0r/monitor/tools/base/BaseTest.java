@@ -5,6 +5,7 @@ import com.object0r.monitor.tools.datatypes.HistoricValue;
 import com.object0r.monitor.tools.datatypes.SshConnectionData;
 import com.object0r.monitor.tools.datatypes.TimeInterval;
 import com.object0r.monitor.tools.helpers.HistoricValuesManager;
+import com.object0r.monitor.tools.helpers.PersistentFailureSignal;
 import com.object0r.toortools.ConsoleColors;
 import com.object0r.toortools.helpers.DateHelper;
 import com.object0r.toortools.os.OsCommandOutput;
@@ -302,6 +303,81 @@ public abstract class BaseTest extends Thread
     protected boolean checkIfNumericValueHasIncreased(String variableName, String subtitlesCountString, int timeUnitValue, TimeUnit timeUnit)
     {
         return checkIfValueHasChanged(variableName, subtitlesCountString, timeUnitValue, timeUnit, true);
+    }
+
+    /**
+     * Returns true only after a failure has remained active for the requested time.
+     * A successful check resets the failure start time.
+     */
+    protected boolean checkIfFailurePersists(String variableName, boolean failed, int timeUnitValue, TimeUnit timeUnit)
+    {
+        String configError = getPersistentFailureConfigError(variableName, timeUnitValue, timeUnit);
+        if (configError != null)
+        {
+            errors.add(configError);
+            return true;
+        }
+
+        return PersistentFailureSignal.updateAndCheck(
+                getPersistentFailureVariableName(variableName),
+                failed,
+                timeUnitValue,
+                timeUnit);
+    }
+
+    /**
+     * Filters current errors through persistent-failure state. Empty errors reset
+     * the timer. Non-empty errors are returned only after the same failure key
+     * has remained failed for the requested time.
+     */
+    protected Vector<String> getErrorsIfFailurePersists(String variableName, Vector<String> currentErrors, int timeUnitValue, TimeUnit timeUnit)
+    {
+        Vector<String> persistentErrors = new Vector<String>();
+        String configError = getPersistentFailureConfigError(variableName, timeUnitValue, timeUnit);
+        if (configError != null)
+        {
+            persistentErrors.add(configError);
+            return persistentErrors;
+        }
+        if (currentErrors == null)
+        {
+            persistentErrors.add(getTestName() + " - persistent failure currentErrors is null for " + variableName);
+            return persistentErrors;
+        }
+
+        if (currentErrors.isEmpty())
+        {
+            checkIfFailurePersists(variableName, false, timeUnitValue, timeUnit);
+            return persistentErrors;
+        }
+
+        if (checkIfFailurePersists(variableName, true, timeUnitValue, timeUnit))
+        {
+            persistentErrors.addAll(currentErrors);
+        }
+        return persistentErrors;
+    }
+
+    private String getPersistentFailureVariableName(String variableName)
+    {
+        return getClass().getName() + "." + variableName + ".persistentFailure";
+    }
+
+    private String getPersistentFailureConfigError(String variableName, int timeUnitValue, TimeUnit timeUnit)
+    {
+        if (variableName == null || variableName.trim().isEmpty())
+        {
+            return getTestName() + " - persistent failure variableName is empty";
+        }
+        if (timeUnitValue < 0)
+        {
+            return getTestName() + " - persistent failure timeUnitValue is invalid for " + variableName + ": " + timeUnitValue;
+        }
+        if (timeUnit == null)
+        {
+            return getTestName() + " - persistent failure timeUnit is null for " + variableName;
+        }
+        return null;
     }
 
     protected void triggerErrorIfVariableHasntChanged(String value, String valueName, int idleHours, TimeUnit timeUnit)
