@@ -158,15 +158,26 @@ public abstract class AbstractRetryingTest extends BaseTest
         return lastErrors;
     }
 
-    protected void retryAndAlertIfFailurePersists(String variableName, int timeUnitValue, TimeUnit timeUnit, RetryableCheck action)
+    /**
+     * Runs a retryable check, adds persistent-gated errors to the shared errors
+     * vector, and returns all current final retry errors.
+     */
+    protected Vector<String> retryAndGetErrorsIfFailurePersists(String variableName, int timeUnitValue, TimeUnit timeUnit, RetryableCheck action)
     {
-        retryAndAlertIfFailurePersists(variableName, timeUnitValue, timeUnit, action, getMaxRetries(), getRetryDelayMs());
+        return retryAndGetErrorsIfFailurePersists(variableName, timeUnitValue, timeUnit, action, getMaxRetries(), getRetryDelayMs());
     }
 
-    protected void retryAndAlertIfFailurePersists(String variableName, int timeUnitValue, TimeUnit timeUnit, RetryableCheck action, int maxRetries, int delayMs)
+    /**
+     * Runs a retryable check with explicit retry settings, adds persistent-gated
+     * errors to the shared errors vector, and returns all current final retry
+     * errors.
+     */
+    protected Vector<String> retryAndGetErrorsIfFailurePersists(String variableName, int timeUnitValue, TimeUnit timeUnit, RetryableCheck action, int maxRetries, int delayMs)
     {
         Vector<String> finalErrors = getErrorsAfterRetry(action, maxRetries, delayMs);
         errors.addAll(getErrorsIfFailurePersists(variableName, finalErrors, timeUnitValue, timeUnit));
+
+        return finalErrors;
     }
 
     private String getRetryCaller()
