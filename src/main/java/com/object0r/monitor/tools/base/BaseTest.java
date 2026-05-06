@@ -558,6 +558,17 @@ public abstract class BaseTest extends Thread
         return status;
     }
 
+    public String getFullRuntimeStatus()
+    {
+        String status = getRuntimeStatusLine();
+        String runningSectionsStatus = getRunningSectionsStatus();
+        if (runningSectionsStatus.length() > 0)
+        {
+            status += "\nStill running:\n" + runningSectionsStatus;
+        }
+        return status;
+    }
+
     private String formatDuration(long millis)
     {
         if (millis < 0)
