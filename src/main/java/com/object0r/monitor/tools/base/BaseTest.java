@@ -19,10 +19,14 @@ import java.util.concurrent.TimeUnit;
 
 public abstract class BaseTest extends Thread
 {
-    private boolean hasStarted = false;
-    private boolean hasCompleted = false;
+    private volatile boolean hasStarted = false;
+    private volatile boolean hasCompleted = false;
     private boolean shouldRun = false;
     private boolean forceRun = false;
+    private volatile long startedAtMillis = 0;
+    private volatile long completedAtMillis = 0;
+    private volatile String runningThreadName = "";
+    private final Vector<RunningSection> runningSections = new Vector<RunningSection>();
     private String testReportPrefix = "osm - ";
     //protected abstract TimeInterval getRunEvery();
 
@@ -60,73 +64,91 @@ public abstract class BaseTest extends Thread
 
     public void run()
     {
+        startedAtMillis = System.currentTimeMillis();
         hasStarted = true;
-        if (isTestPaused())
+        String originalThreadName = Thread.currentThread().getName();
+        runningThreadName = getTestName();
+        Thread.currentThread().setName(runningThreadName);
+        try
         {
-            hasCompleted = true;
-            BaseTest.addTestToPaused(getTestName());
-            return;
-        }
-
-        if (isTestPausedUntil())
-        {
-            hasCompleted = true;
-            BaseTest.addTestToPaused(getTestName() + " - " + getPausedUntilDate().toString());
-            return;
-        }
-
-        if (isTestPausedUntil())
-        {
-            hasCompleted = true;
-            BaseTest.addTestToPaused(getTestName());
-            return;
-        }
-
-        if (!shouldRun() && !forceRun)
-        {
-            hasCompleted = true;
-            return;
-        }
-        shouldRun = true;
-
-        System.out.println("Running " + getTestName() + " (every " + getRunEvery().getCount() + " " + getRunEvery().getTimeUnit() + ")");
-        //errors = runTests();
-        errors = baseRunTests();
-        if (errors.size() > 0)
-        {
-            ConsoleColors.printRed("Sending errors:");
-        }
-        boolean shouldReport = shouldReport();
-        if (shouldReport)
-        {
-            //clean duplicates
-            Set<String> set = new HashSet<String>();
-            set.addAll(errors);
-            errors.clear();
-            errors.addAll(set);
-            String separator = "\n----------------------\n";
-            StringBuffer aggregatedErrors = new StringBuffer("");
-            for (String error : errors)
+            if (isTestPaused())
             {
-                System.out.println(error);
-                for (BaseReporter reporter : reporters)
+                markCompleted();
+                BaseTest.addTestToPaused(getTestName());
+                return;
+            }
+
+            if (isTestPausedUntil())
+            {
+                markCompleted();
+                BaseTest.addTestToPaused(getTestName() + " - " + getPausedUntilDate().toString());
+                return;
+            }
+
+            if (isTestPausedUntil())
+            {
+                markCompleted();
+                BaseTest.addTestToPaused(getTestName());
+                return;
+            }
+
+            if (!shouldRun() && !forceRun)
+            {
+                markCompleted();
+                return;
+            }
+            shouldRun = true;
+
+            System.out.println("Running " + getTestName() + " (every " + getRunEvery().getCount() + " " + getRunEvery().getTimeUnit() + ")");
+            //errors = runTests();
+            errors = baseRunTests();
+            if (errors.size() > 0)
+            {
+                ConsoleColors.printRed("Sending errors:");
+            }
+            boolean shouldReport = shouldReport();
+            if (shouldReport)
+            {
+                //clean duplicates
+                Set<String> set = new HashSet<String>();
+                set.addAll(errors);
+                errors.clear();
+                errors.addAll(set);
+                String separator = "\n----------------------\n";
+                StringBuffer aggregatedErrors = new StringBuffer("");
+                for (String error : errors)
                 {
-                    aggregatedErrors.append(error);
-                    aggregatedErrors.append(separator);
-                    if (!sendAggregated)
+                    System.out.println(error);
+                    for (BaseReporter reporter : reporters)
                     {
-                        reporter.report(getTestReportPrefix() + getTestName(), error + "\nRuns Every: " + this.getRunEvery().toString());
+                        aggregatedErrors.append(error);
+                        aggregatedErrors.append(separator);
+                        if (!sendAggregated)
+                        {
+                            reporter.report(getTestReportPrefix() + getTestName(), error + "\nRuns Every: " + this.getRunEvery().toString());
+                        }
+                    }
+                }
+                if (sendAggregated && errors.size() > 0)
+                {
+                    for (BaseReporter reporter : reporters)
+                    {
+                        reporter.report(getTestReportPrefix() + getTestName() + " - " + errors.size() + " errors", aggregatedErrors.toString());
                     }
                 }
             }
-            if (sendAggregated && errors.size() > 0)
-            {
-                for (BaseReporter reporter : reporters)
-                {
-                    reporter.report(getTestReportPrefix() + getTestName() + " - " + errors.size() + " errors", aggregatedErrors.toString());
-                }
-            }
+            markCompleted();
         }
+        finally
+        {
+            runningThreadName = "";
+            Thread.currentThread().setName(originalThreadName);
+        }
+    }
+
+    private void markCompleted()
+    {
+        completedAtMillis = System.currentTimeMillis();
         hasCompleted = true;
     }
 
@@ -230,6 +252,63 @@ public abstract class BaseTest extends Thread
      * @return
      */
     protected abstract Vector<String> runTests() throws Exception;
+
+    protected RunningSection trackRunningSection(String name)
+    {
+        RunningSection runningSection = new RunningSection(name);
+        runningSections.add(runningSection);
+        return runningSection;
+    }
+
+    public String getRunningSectionsStatus()
+    {
+        String status = "";
+        synchronized (runningSections)
+        {
+            for (int i = 0; i < runningSections.size(); i++)
+            {
+                RunningSection runningSection = runningSections.get(i);
+                status += runningSection.getName() + " - running for " + formatDuration(System.currentTimeMillis() - runningSection.getStartedAtMillis()) + "\n";
+            }
+        }
+        return status;
+    }
+
+    protected class RunningSection implements AutoCloseable
+    {
+        private final String name;
+        private final long startedAtMillis;
+        private boolean closed = false;
+
+        private RunningSection(String name)
+        {
+            if (name == null || name.trim().length() == 0)
+            {
+                name = "unnamed section";
+            }
+            this.name = name;
+            this.startedAtMillis = System.currentTimeMillis();
+        }
+
+        private String getName()
+        {
+            return name;
+        }
+
+        private long getStartedAtMillis()
+        {
+            return startedAtMillis;
+        }
+
+        public void close()
+        {
+            if (!closed)
+            {
+                runningSections.remove(this);
+                closed = true;
+            }
+        }
+    }
 
     protected boolean checkIfValueHasChanged(String variableName, String valueString, int timeUnitValue, TimeUnit timeUnit)
     {
@@ -457,6 +536,45 @@ public abstract class BaseTest extends Thread
     public boolean hasCompleted()
     {
         return hasCompleted;
+    }
+
+    public String getRuntimeStatusLine()
+    {
+        String status = getTestName();
+        if (!hasStarted())
+        {
+            return status + " - not started";
+        }
+        if (hasCompleted())
+        {
+            return status + " - completed in " + formatDuration(completedAtMillis - startedAtMillis);
+        }
+
+        status += " - running for " + formatDuration(System.currentTimeMillis() - startedAtMillis);
+        if (runningThreadName != null && runningThreadName.length() > 0)
+        {
+            status += ", thread=" + runningThreadName;
+        }
+        return status;
+    }
+
+    private String formatDuration(long millis)
+    {
+        if (millis < 0)
+        {
+            millis = 0;
+        }
+        long seconds = millis / 1000;
+        if (seconds < 60)
+        {
+            return seconds + " seconds";
+        }
+        long minutes = seconds / 60;
+        if (minutes < 60)
+        {
+            return minutes + " minutes " + (seconds % 60) + " seconds";
+        }
+        return (minutes / 60) + " hours " + (minutes % 60) + " minutes";
     }
 
     public boolean isShouldRun()
