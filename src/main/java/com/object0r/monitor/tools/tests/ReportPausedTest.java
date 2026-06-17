@@ -13,7 +13,7 @@ public class ReportPausedTest extends BaseTest
 
     protected TimeInterval getRunEvery()
     {
-        return new TimeInterval(6, TimeUnit.HOURS);
+        return new TimeInterval(24, TimeUnit.HOURS);
     }
 
     private boolean debug = true;
