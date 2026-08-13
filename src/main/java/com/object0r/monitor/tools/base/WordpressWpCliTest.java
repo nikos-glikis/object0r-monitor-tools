@@ -34,7 +34,7 @@ abstract public class WordpressWpCliTest extends BaseTest
 
             osCommandOutput = OsHelper.runRemoteCommandRetries
                     (
-                            getHost(), getPort(), "su - " + getUser() + " -c ' cd " + getPath() + " &&  " + wpCliCommand + " plugin update --all'", getSshUser(), getPath(), getPrivateKeyPath(), 5, 500
+                            getHost(), getPort(), "su - " + getUser() + " -c ' cd " + getPath() + " &&  " + getPluginUpdateCommand(wpCliCommand) + "'", getSshUser(), getPath(), getPrivateKeyPath(), 5, 500
                     );
             if (osCommandOutput.getExitCode() != 0)
             {
@@ -72,6 +72,21 @@ abstract public class WordpressWpCliTest extends BaseTest
     protected String getWpCliCommand()
     {
         return "wp";
+    }
+
+    protected String getPluginUpdateCommand(String wpCliCommand)
+    {
+        String[] excludedPlugins = getExcludedPluginUpdates();
+        if (excludedPlugins == null || excludedPlugins.length == 0)
+        {
+            return wpCliCommand + " plugin update --all";
+        }
+        return wpCliCommand + " plugin update --all --exclude=" + String.join(",", excludedPlugins);
+    }
+
+    protected String[] getExcludedPluginUpdates()
+    {
+        return new String[0];
     }
 
 
